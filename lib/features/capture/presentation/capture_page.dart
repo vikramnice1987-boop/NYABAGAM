@@ -35,11 +35,11 @@ class _CapturePageState extends State<CapturePage> {
   String _attachmentType = 'image';
 
   final List<Map<String, String>> _supportedLanguages = [
-    {'code': 'en-IN', 'label': 'English', 'sub': 'en-IN'},
-    {'code': 'ta-IN', 'label': 'Tamil', 'sub': 'à®¤à®®à®¿à®´à¯'},
-    {'code': 'hi-IN', 'label': 'Hindi', 'sub': 'à¤¹à¤¿à¤‚à¤¦à¥€'},
-    {'code': 'te-IN', 'label': 'Telugu', 'sub': 'à°¤à±†à°²à±à°—à±'},
-    {'code': 'en-US', 'label': 'English (US)', 'sub': 'en-US'},
+    {'code': 'en-IN', 'label': 'English'},
+    {'code': 'ta-IN', 'label': 'Tamil'},
+    {'code': 'hi-IN', 'label': 'Hindi'},
+    {'code': 'te-IN', 'label': 'Telugu'},
+    {'code': 'en-US', 'label': 'English (US)'},
   ];
 
   @override
@@ -284,51 +284,73 @@ class _CapturePageState extends State<CapturePage> {
 
             // Tab 1: Voice Capture
             if (_selectedTabIndex == 1) ...[
-              // Language Selector Header
-              NyCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // High-Contrast Custom Language Selector
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: theme.colorScheme.outline.withAlpha(70)),
+                ),
+                child: Row(
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Speech Language:',
-                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                        ),
-                      ],
+                    const Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Speech Language:',
+                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                     ),
-                    const SizedBox(height: 10),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _supportedLanguages.map((lang) {
-                          final isSelected = _selectedLanguageCode == lang['code'];
-                          return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: ChoiceChip(
-                              selected: isSelected,
-                              label: Text('${lang['label']} (${lang['sub']})'),
-                              labelStyle: TextStyle(
-                                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                                fontSize: 12,
-                                color: isSelected ? Colors.white : theme.colorScheme.onSurface,
-                              ),
-                              selectedColor: theme.colorScheme.primary,
-                              onSelected: (selected) {
-                                if (selected) {
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: _supportedLanguages.map((lang) {
+                            final isSel = _selectedLanguageCode == lang['code'];
+                            return Padding(
+                              padding: const EdgeInsets.only(right: 6),
+                              child: InkWell(
+                                onTap: () {
                                   setState(() {
                                     _selectedLanguageCode = lang['code']!;
                                     if (_isRecording) {
                                       _toggleVoiceRecording();
                                     }
                                   });
-                                }
-                              },
-                            ),
-                          );
-                        }).toList(),
+                                },
+                                borderRadius: BorderRadius.circular(16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                                      width: isSel ? 1.5 : 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (isSel) ...[
+                                        const Icon(Icons.check_rounded, size: 14, color: Colors.white),
+                                        const SizedBox(width: 4),
+                                      ],
+                                      Text(
+                                        lang['label']!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                          color: isSel ? Colors.white : theme.colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ],
@@ -347,11 +369,11 @@ class _CapturePageState extends State<CapturePage> {
                         padding: EdgeInsets.all(_isRecording ? 28 : 22),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isRecording ? NyColors.statusError : theme.colorScheme.primary,
+                          color: _isRecording ? NyColors.statusError : NyColors.accentLight,
                           boxShadow: [
                             BoxShadow(
-                              color: (_isRecording ? NyColors.statusError : theme.colorScheme.primary).withAlpha(120),
-                              blurRadius: _isRecording ? 32 : 14,
+                              color: (_isRecording ? NyColors.statusError : NyColors.accentLight).withAlpha(120),
+                              blurRadius: _isRecording ? 32 : 16,
                               spreadRadius: _isRecording ? 8 : 2,
                             ),
                           ],
