@@ -13,6 +13,7 @@ import '../../features/context/presentation/context_bridge_page.dart';
 import '../../features/actions/presentation/action_approval_page.dart';
 import '../../features/outcomes/presentation/outcome_record_page.dart';
 import '../../features/reminders/presentation/reminders_page.dart';
+import '../../features/onboarding/presentation/onboarding_page.dart';
 import '../../features/memory/domain/memory_candidate.dart';
 import '../../features/memory/domain/memory_models.dart';
 
@@ -68,6 +69,11 @@ final GoRouter appRouter = GoRouter(
           ],
         ),
       ],
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingPage(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

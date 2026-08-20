@@ -1,143 +1,473 @@
 import 'package:flutter/material.dart';
-import '../../../core/config/app_environment.dart';
-import '../../../core/supabase/supabase_service.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../core/theme/theme_controller.dart';
-import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
+import '../presentation/user_profile_controller.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final List<String> _avatars = ['ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â¨ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¼', 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â©ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¼', 'ÃƒÂ°Ã…Â¸Ã‚Â§Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â»', 'ÃƒÂ¢Ã…Â¡Ã‚Â¡', 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â', 'ÃƒÂ°Ã…Â¸Ã…â€™Ã…Â¸'];
+  final List<Map<String, String>> _languages = [
+    {'code': 'en-IN', 'label': 'English'},
+    {'code': 'ta-IN', 'label': 'Tamil'},
+    {'code': 'hi-IN', 'label': 'Hindi'},
+    {'code': 'te-IN', 'label': 'Telugu'},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    UserProfileController.instance.init();
+  }
+
+  void _showEditProfileDialog(BuildContext context) {
+    final profile = UserProfileController.instance.profile;
+    final nameCtrl = TextEditingController(text: profile.name);
+    final phoneCtrl = TextEditingController(text: profile.phone);
+    final emailCtrl = TextEditingController(text: profile.email);
+    final cityCtrl = TextEditingController(text: profile.city);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Edit Profile Details', style: TextStyle(fontWeight: FontWeight.w800)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Full Name:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.person_rounded, size: 18),
+                  border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text('WhatsApp Phone:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.phone_rounded, size: 18),
+                  border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text('Email Address:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.email_rounded, size: 18),
+                  border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text('City / Location:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+              const SizedBox(height: 4),
+              TextField(
+                controller: cityCtrl,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.location_on_rounded, size: 18),
+                  border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: NyColors.accentLight, foregroundColor: Colors.white),
+            onPressed: () async {
+              await UserProfileController.instance.updateProfile(
+                name: nameCtrl.text.trim(),
+                phone: phoneCtrl.text.trim(),
+                email: emailCtrl.text.trim(),
+                city: cityCtrl.text.trim(),
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) setState(() {});
+            },
+            child: const Text('Save Details', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _exportMemories() async {
+    final jsonString = await UserProfileController.instance.exportMemoriesJson();
+    await Clipboard.setData(ClipboardData(text: jsonString));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Memories and profile exported to clipboard as JSON backup!'),
+          backgroundColor: NyColors.statusSuccess,
+        ),
+      );
+    }
+  }
+
+  void _showResetConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset All Local Data?', style: TextStyle(fontWeight: FontWeight.w800, color: NyColors.statusError)),
+        content: const Text('This will clear your local stored memories and restart the onboarding flow. Are you sure?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: NyColors.statusError, foregroundColor: Colors.white),
+            onPressed: () async {
+              await UserProfileController.instance.clearAllData();
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                ctx.go('/onboarding');
+              }
+            },
+            child: const Text('Reset & Restart', style: TextStyle(fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isConfigured = AppEnvironment.current.isSupabaseConfigured;
-    final user = isConfigured ? SupabaseService.client.auth.currentUser : null;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile & Settings'),
+        title: const Text('Profile & Settings', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(NySpacing.space20),
-        children: [
-          NyCard(
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  child: const Icon(Icons.person, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.email ?? 'Local User (Offline Mode)',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        isConfigured ? 'Secured by Supabase RLS' : 'In-Memory Development Mode',
-                        style: TextStyle(fontSize: 12, color: theme.colorScheme.secondary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: NySpacing.space24),
+      body: ListenableBuilder(
+        listenable: UserProfileController.instance,
+        builder: (context, _) {
+          final profile = UserProfileController.instance.profile;
 
-          Text('Appearance & Theme', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          NyCard(
-            child: ListenableBuilder(
-              listenable: ThemeController.instance,
-              builder: (context, _) {
-                final currentMode = ThemeController.instance.themeMode;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          return ListView(
+            padding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: 12),
+            children: [
+              // 1. User Profile Header Card
+              NyCard(
+                child: Column(
                   children: [
-                    const Text(
-                      'Select App Theme Mode:',
-                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                    Row(
+                      children: [
+                        // Avatar with emoji
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: NyColors.accentLight.withAlpha(30),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: NyColors.accentLight.withAlpha(100), width: 1.5),
+                          ),
+                          child: Text(profile.avatarEmoji, style: const TextStyle(fontSize: 32)),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      profile.name,
+                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: NyColors.statusSuccess.withAlpha(30),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Text('Active', style: TextStyle(fontSize: 10, color: NyColors.statusSuccess, fontWeight: FontWeight.w800)),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                profile.phone,
+                                style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(180), fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                '${profile.city} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${profile.email}',
+                                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(140)),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
+
+                    // Avatar Quick Selection Bar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: _avatars.map((emoji) {
+                        final isSel = profile.avatarEmoji == emoji;
+                        return InkWell(
+                          onTap: () => UserProfileController.instance.updateProfile(avatarEmoji: emoji),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: isSel ? NyColors.accentLight.withAlpha(40) : Colors.transparent,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isSel ? NyColors.accentLight : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Text(emoji, style: const TextStyle(fontSize: 18)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 10),
+
                     SizedBox(
                       width: double.infinity,
-                      child: SegmentedButton<ThemeMode>(
-                        segments: const [
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.dark,
-                            icon: Icon(Icons.dark_mode_outlined),
-                            label: Text('Dark'),
-                          ),
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.light,
-                            icon: Icon(Icons.light_mode_outlined),
-                            label: Text('Light'),
-                          ),
-                          ButtonSegment<ThemeMode>(
-                            value: ThemeMode.system,
-                            icon: Icon(Icons.settings_brightness_outlined),
-                            label: Text('System'),
-                          ),
-                        ],
-                        selected: {currentMode},
-                        onSelectionChanged: (Set<ThemeMode> newSelection) {
-                          ThemeController.instance.setThemeMode(newSelection.first);
-                        },
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.edit_rounded, size: 16),
+                        label: const Text('Edit Profile Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                        onPressed: () => _showEditProfileDialog(context),
                       ),
                     ),
                   ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: NySpacing.space24),
-
-          Text('Privacy & Data Controls', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          NyCard(
-            child: Column(
-              children: [
-                const ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.lock_outline),
-                  title: Text('Zero-Data Model Retention'),
-                  subtitle: Text('OpenAI calls run with store: false. AI keys never enter the app.'),
                 ),
-                const Divider(),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.download_outlined),
-                  title: const Text('Export My Memories'),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Memory export prepared.')),
+              ),
+              const SizedBox(height: NySpacing.space20),
+
+              // 2. Speech & Language Preferences
+              Text('Speech & Language Preferences', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              NyCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
+                        SizedBox(width: 8),
+                        Text('Default Speech Language', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Preferred language for voice capture deduplication and query processing.',
+                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(150)),
+                    ),
+                    const SizedBox(height: 10),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: _languages.map((lang) {
+                          final isSel = profile.preferredLanguage == lang['code'];
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: InkWell(
+                              onTap: () => UserProfileController.instance.updateProfile(preferredLanguage: lang['code']),
+                              borderRadius: BorderRadius.circular(16),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                                    width: isSel ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  lang['label']!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                                    color: isSel ? Colors.white : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space20),
+
+              // 3. Proactive Reminders & WhatsApp Controls
+              Text('Machine Reminders & WhatsApp Actions', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              NyCard(
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.alarm_on_rounded, color: NyColors.statusError),
+                      title: const Text('2-Day Early Warranty Alerts', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('Proactively show alerts before machine warranties expire.', style: TextStyle(fontSize: 11)),
+                      value: profile.is2DayAlertsEnabled,
+                      activeThumbColor: NyColors.accentLight,
+                      onChanged: (val) => UserProfileController.instance.updateProfile(is2DayAlertsEnabled: val),
+                    ),
+                    const Divider(),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      secondary: const Icon(Icons.chat_rounded, color: NyColors.statusSuccess),
+                      title: const Text('WhatsApp 1-Tap Assistant', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('Pre-fill technician service chats with historical context.', style: TextStyle(fontSize: 11)),
+                      value: profile.isWhatsAppEnabled,
+                      activeThumbColor: NyColors.statusSuccess,
+                      onChanged: (val) => UserProfileController.instance.updateProfile(isWhatsAppEnabled: val),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space20),
+
+              // 4. Appearance & Theme Settings
+              Text('Appearance & Theme', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              NyCard(
+                child: ListenableBuilder(
+                  listenable: ThemeController.instance,
+                  builder: (context, _) {
+                    final currentMode = ThemeController.instance.themeMode;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'App Display Theme Mode:',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: SegmentedButton<ThemeMode>(
+                            segments: const [
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.dark,
+                                icon: Icon(Icons.dark_mode_outlined),
+                                label: Text('Dark'),
+                              ),
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.light,
+                                icon: Icon(Icons.light_mode_outlined),
+                                label: Text('Light'),
+                              ),
+                              ButtonSegment<ThemeMode>(
+                                value: ThemeMode.system,
+                                icon: Icon(Icons.settings_brightness_outlined),
+                                label: Text('System'),
+                              ),
+                            ],
+                            selected: {currentMode},
+                            onSelectionChanged: (Set<ThemeMode> newSelection) {
+                              ThemeController.instance.setThemeMode(newSelection.first);
+                            },
+                          ),
+                        ),
+                      ],
                     );
                   },
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: NySpacing.space24),
+              ),
+              const SizedBox(height: NySpacing.space20),
 
-          if (user != null)
-            NyButton(
-              label: 'Sign Out',
-              variant: NyButtonVariant.destructive,
-              icon: Icons.logout,
-              onPressed: () async {
-                await SupabaseService.client.auth.signOut();
-              },
-            ),
-        ],
+              // 5. Privacy & Data Controls
+              Text('Privacy & Data Management', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              NyCard(
+                child: Column(
+                  children: [
+                    const ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(Icons.lock_outline, color: NyColors.accentLight),
+                      title: Text('Zero-Data Model Retention', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: Text('Your memories are stored locally. AI entity extraction never trains on personal data.', style: TextStyle(fontSize: 11)),
+                    ),
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.download_rounded, color: NyColors.statusSuccess),
+                      title: const Text('Export All Memories (JSON)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('Copy full JSON backup of memories, warranties & profile.', style: TextStyle(fontSize: 11)),
+                      trailing: const Icon(Icons.copy_rounded, size: 18),
+                      onTap: _exportMemories,
+                    ),
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.delete_forever_rounded, color: NyColors.statusError),
+                      title: const Text('Reset All Local Data', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: NyColors.statusError)),
+                      subtitle: const Text('Clear local memory database and restart setup.', style: TextStyle(fontSize: 11)),
+                      onTap: () => _showResetConfirmDialog(context),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space20),
+
+              // 6. Onboarding Replay & Version Info
+              NyCard(
+                child: Column(
+                  children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.help_outline_rounded, color: NyColors.accentLight),
+                      title: const Text('Replay Onboarding Guide', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('View the 4-step walkthrough and value guide.', style: TextStyle(fontSize: 11)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                      onTap: () => context.push('/onboarding'),
+                    ),
+                    const Divider(),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 6),
+                      child: Text(
+                        'NYABAGAM ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Version 1.2.0 (Production Release)',
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 40),
+            ],
+          );
+        },
       ),
     );
   }
