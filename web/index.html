@@ -19,7 +19,7 @@
   <title>NYABAGAM</title>
   <link rel="manifest" href="manifest.json">
 
-  <!-- Google Fonts for elevated typography -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,8 +38,7 @@
     window.nyabagamSpeech = {
       recognition: null,
       isListening: false,
-      finalTranscript: '',
-      currentLang: 'en-IN',
+      currentLang: 'ta-IN',
       start: function(lang) {
         var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -51,25 +50,37 @@
           if (this.recognition) {
             try { this.recognition.abort(); } catch(e) {}
           }
-          this.finalTranscript = '';
-          this.currentLang = lang || 'en-IN';
+          this.currentLang = lang || 'ta-IN';
           this.recognition = new SpeechRecognition();
           this.recognition.continuous = true;
           this.recognition.interimResults = true;
           this.recognition.lang = this.currentLang;
 
           this.recognition.onresult = function(event) {
-            var interim = '';
-            for (var i = event.resultIndex; i < event.results.length; ++i) {
-              var piece = event.results[i][0].transcript;
+            var finalStr = '';
+            var interimStr = '';
+            for (var i = 0; i < event.results.length; ++i) {
+              var transcriptPiece = event.results[i][0].transcript;
               if (event.results[i].isFinal) {
-                window.nyabagamSpeech.finalTranscript += piece + ' ';
+                finalStr += transcriptPiece + ' ';
               } else {
-                interim += piece;
+                interimStr += transcriptPiece;
               }
             }
-            var output = (window.nyabagamSpeech.finalTranscript + interim).trim();
-            window.dispatchEvent(new CustomEvent('nyabagam_speech_result', { detail: output }));
+            var fullRaw = (finalStr + interimStr).trim();
+
+            // Consecutive word & phrase deduplication filter
+            var words = fullRaw.split(/\s+/);
+            var cleanWords = [];
+            for (var j = 0; j < words.length; j++) {
+              var curr = words[j].trim();
+              if (!curr) continue;
+              if (cleanWords.length === 0 || cleanWords[cleanWords.length - 1].toLowerCase() !== curr.toLowerCase()) {
+                cleanWords.push(curr);
+              }
+            }
+            var cleanTranscript = cleanWords.join(' ');
+            window.dispatchEvent(new CustomEvent('nyabagam_speech_result', { detail: cleanTranscript }));
           };
 
           this.recognition.onerror = function(event) {

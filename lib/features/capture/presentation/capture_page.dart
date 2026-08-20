@@ -34,13 +34,13 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
   String _attachmentType = 'image';
 
   final List<Map<String, String>> _supportedLanguages = [
-    {'code': 'ta-IN', 'name': 'à®¤à®®à®¿à®´à¯ (Tamil)'},
+    {'code': 'ta-IN', 'name': 'Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â (Tamil)'},
     {'code': 'en-IN', 'name': 'English (India)'},
     {'code': 'en-US', 'name': 'English (US)'},
-    {'code': 'hi-IN', 'name': 'à¤¹à¤¿à¤‚à¤¦à¥€ (Hindi)'},
-    {'code': 'te-IN', 'name': 'à°¤à±†à°²à±à°—à± (Telugu)'},
-    {'code': 'ml-IN', 'name': 'à´®à´²à´¯à´¾à´³à´‚ (Malayalam)'},
-    {'code': 'kn-IN', 'name': 'à²•à²¨à³à²¨à²¡ (Kannada)'},
+    {'code': 'hi-IN', 'name': 'Ã Â¤Â¹Ã Â¤Â¿Ã Â¤â€šÃ Â¤Â¦Ã Â¥â‚¬ (Hindi)'},
+    {'code': 'te-IN', 'name': 'Ã Â°Â¤Ã Â±â€ Ã Â°Â²Ã Â±ÂÃ Â°â€”Ã Â±Â (Telugu)'},
+    {'code': 'ml-IN', 'name': 'Ã Â´Â®Ã Â´Â²Ã Â´Â¯Ã Â´Â¾Ã Â´Â³Ã Â´â€š (Malayalam)'},
+    {'code': 'kn-IN', 'name': 'Ã Â²â€¢Ã Â²Â¨Ã Â³ÂÃ Â²Â¨Ã Â²Â¡ (Kannada)'},
   ];
 
   @override
@@ -116,6 +116,19 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     }
   }
 
+    String _deduplicateWords(String input) {
+    final words = input.split(RegExp(r'\s+'));
+    final unique = <String>[];
+    for (final w in words) {
+      final trimmed = w.trim();
+      if (trimmed.isEmpty) continue;
+      if (unique.isEmpty || unique.last.toLowerCase() != trimmed.toLowerCase()) {
+        unique.add(trimmed);
+      }
+    }
+    return unique.join(' ');
+  }
+
   void _toggleVoiceRecording() {
     if (_isRecording) {
       SpeechService.instance.stopListening();
@@ -133,7 +146,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
         onResult: (transcript, isFinal) {
           if (mounted && transcript.isNotEmpty) {
             setState(() {
-              _textController.text = transcript;
+              _textController.text = _deduplicateWords(transcript);
             });
           }
         },
@@ -165,7 +178,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
   }
 
   Future<void> _continueWithUnderstanding() async {
-    final content = _textController.text.trim();
+    final content = _deduplicateWords(_textController.text.trim());
     if (content.isEmpty && _attachedFileName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please write text, speak into the mic, or attach a photo.')),
@@ -231,7 +244,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               tabs: const [
                 Tab(icon: Icon(Icons.edit_note_rounded, size: 18), text: 'Text'),
-                Tab(icon: Icon(Icons.mic_rounded, size: 18), text: 'Voice (à®•à¯à®°à®²à¯)'),
+                Tab(icon: Icon(Icons.mic_rounded, size: 18), text: 'Voice (Ã Â®â€¢Ã Â¯ÂÃ Â®Â°Ã Â®Â²Ã Â¯Â)'),
                 Tab(icon: Icon(Icons.photo_camera_rounded, size: 18), text: 'Camera / Scan'),
               ],
             ),
@@ -257,7 +270,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Type in English, à®¤à®®à®¿à®´à¯, or any language. AI will extract structured facts.',
+                          'Type in English, Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â, or any language. AI will extract structured facts.',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
                         ),
                         const SizedBox(height: NySpacing.space16),
@@ -267,7 +280,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: 5,
                           maxLines: 8,
                           decoration: InputDecoration(
-                            hintText: 'e.g., Ravi serviced my AC today for â‚¹800.\nor à®°à®µà®¿ à®‡à®©à¯à®±à¯ à®à®šà®¿ à®šà®°à¯à®µà¯€à®¸à¯ à®šà¯†à®¯à¯à®¤à®¾à®°à¯ â‚¹800.',
+                            hintText: 'e.g., Ravi serviced my AC today for Ã¢â€šÂ¹800.\nor Ã Â®Â°Ã Â®ÂµÃ Â®Â¿ Ã Â®â€¡Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â¯Â Ã Â®ÂÃ Â®Å¡Ã Â®Â¿ Ã Â®Å¡Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â¯â‚¬Ã Â®Â¸Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¾Ã Â®Â°Ã Â¯Â Ã¢â€šÂ¹800.',
                             border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
                           ),
                         ),

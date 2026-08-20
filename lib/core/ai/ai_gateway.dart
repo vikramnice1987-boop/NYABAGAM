@@ -83,7 +83,21 @@ abstract final class AiGateway {
   }
 
   // --- Multi-Language & Multi-Entity Offline Understanding Engine ---
-  static MemoryCandidate _localUnderstand(String content, MemoryCandidate base) {
+    static String _cleanText(String input) {
+    final words = input.split(RegExp(r'\s+'));
+    final unique = <String>[];
+    for (final w in words) {
+      final trimmed = w.trim();
+      if (trimmed.isEmpty) continue;
+      if (unique.isEmpty || unique.last.toLowerCase() != trimmed.toLowerCase()) {
+        unique.add(trimmed);
+      }
+    }
+    return unique.join(' ');
+  }
+
+  static MemoryCandidate _localUnderstand(String rawInput, MemoryCandidate base) {
+    final content = _cleanText(rawInput);
     final lower = content.toLowerCase();
     final words = content.split(RegExp(r'\s+'));
     final people = <String>{};
@@ -101,14 +115,14 @@ abstract final class AiGateway {
       detectedPhone = phoneMatch.group(0)?.replaceAll(RegExp(r'[\-\s]'), '');
     }
 
-    // 2. Amount Extraction (₹, $, Rs, INR, ரூபாய்)
-    final amtRegex = RegExp(r'(?:[₹$€£]|rs\.?|inr|ரூபாய்|ரூ\.?)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
+    // 2. Amount Extraction (â‚¹, $, Rs, INR, à®°à¯‚à®ªà®¾à®¯à¯)
+    final amtRegex = RegExp(r'(?:[â‚¹$â‚¬Â£]|rs\.?|inr|à®°à¯‚à®ªà®¾à®¯à¯|à®°à¯‚\.?)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
     final amtMatch = amtRegex.firstMatch(content);
     if (amtMatch != null) {
       final rawNum = amtMatch.group(1)?.replaceAll(',', '');
       if (rawNum != null) amount = double.tryParse(rawNum);
     } else {
-      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth|செலவு|கொடுத்தேன்)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
+      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth|à®šà¯†à®²à®µà¯|à®•à¯Šà®Ÿà¯à®¤à¯à®¤à¯‡à®©à¯)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
       final plainMatch = plainNumRegex.firstMatch(content);
       if (plainMatch != null) {
         final rawNum = plainMatch.group(1)?.replaceAll(',', '');
@@ -118,19 +132,19 @@ abstract final class AiGateway {
 
     // 3. Multi-language Things / Appliances / Items (English & Tamil)
     final knownThings = {
-      'ac': 'AC', 'air conditioner': 'Air Conditioner', 'ஏசி': 'AC',
-      'car': 'Car', 'கார்': 'Car',
-      'bike': 'Bike', 'பைக்': 'Bike', 'வண்டி': 'Two Wheeler',
-      'laptop': 'Laptop', 'லேப்டாப்': 'Laptop',
-      'phone': 'Phone', 'போன்': 'Phone', 'மொபைல்': 'Mobile Phone',
-      'fridge': 'Refrigerator', 'refrigerator': 'Refrigerator', 'பிரிட்ஜ்': 'Refrigerator',
-      'tv': 'Television', 'television': 'Television', 'டிவி': 'Television',
-      'washing machine': 'Washing Machine', 'வாஷிங் மெஷின்': 'Washing Machine',
-      'geyser': 'Geyser', 'கீசர்': 'Geyser',
-      'inverter': 'Inverter', 'இன்வெர்ட்டர்': 'Inverter',
-      'motor': 'Water Motor', 'மோட்டார்': 'Water Motor',
+      'ac': 'AC', 'air conditioner': 'Air Conditioner', 'à®à®šà®¿': 'AC',
+      'car': 'Car', 'à®•à®¾à®°à¯': 'Car',
+      'bike': 'Bike', 'à®ªà¯ˆà®•à¯': 'Bike', 'à®µà®£à¯à®Ÿà®¿': 'Two Wheeler',
+      'laptop': 'Laptop', 'à®²à¯‡à®ªà¯à®Ÿà®¾à®ªà¯': 'Laptop',
+      'phone': 'Phone', 'à®ªà¯‹à®©à¯': 'Phone', 'à®®à¯Šà®ªà¯ˆà®²à¯': 'Mobile Phone',
+      'fridge': 'Refrigerator', 'refrigerator': 'Refrigerator', 'à®ªà®¿à®°à®¿à®Ÿà¯à®œà¯': 'Refrigerator',
+      'tv': 'Television', 'television': 'Television', 'à®Ÿà®¿à®µà®¿': 'Television',
+      'washing machine': 'Washing Machine', 'à®µà®¾à®·à®¿à®™à¯ à®®à¯†à®·à®¿à®©à¯': 'Washing Machine',
+      'geyser': 'Geyser', 'à®•à¯€à®šà®°à¯': 'Geyser',
+      'inverter': 'Inverter', 'à®‡à®©à¯à®µà¯†à®°à¯à®Ÿà¯à®Ÿà®°à¯': 'Inverter',
+      'motor': 'Water Motor', 'à®®à¯‹à®Ÿà¯à®Ÿà®¾à®°à¯': 'Water Motor',
       'water purifier': 'Water Purifier', 'ro': 'RO Purifier',
-      'fan': 'Ceiling Fan', 'ஃபேன்': 'Fan',
+      'fan': 'Ceiling Fan', 'à®ƒà®ªà¯‡à®©à¯': 'Fan',
     };
     for (final entry in knownThings.entries) {
       if (lower.contains(entry.key)) things.add(entry.value);
@@ -138,11 +152,11 @@ abstract final class AiGateway {
 
     // 4. Multi-language Organizations & Stores
     final knownOrgs = {
-      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'சாம்சங்': 'Samsung',
-      'lg': 'LG', 'எல்ஜி': 'LG', 'sony': 'Sony', 'சோனி': 'Sony',
+      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'à®šà®¾à®®à¯à®šà®™à¯': 'Samsung',
+      'lg': 'LG', 'à®Žà®²à¯à®œà®¿': 'LG', 'sony': 'Sony', 'à®šà¯‹à®©à®¿': 'Sony',
       'apple': 'Apple', 'amazon': 'Amazon', 'flipkart': 'Flipkart',
-      'honda': 'Honda', 'ஹோண்டா': 'Honda', 'tata': 'Tata', 'டாடா': 'Tata',
-      'apollo': 'Apollo Clinic', 'அப்போலோ': 'Apollo',
+      'honda': 'Honda', 'à®¹à¯‹à®£à¯à®Ÿà®¾': 'Honda', 'tata': 'Tata', 'à®Ÿà®¾à®Ÿà®¾': 'Tata',
+      'apollo': 'Apollo Clinic', 'à®…à®ªà¯à®ªà¯‹à®²à¯‹': 'Apollo',
       'urban company': 'Urban Company', 'croma': 'Croma',
     };
     for (final entry in knownOrgs.entries) {
@@ -172,11 +186,11 @@ abstract final class AiGateway {
     }
 
     // 6. Events / Actions (English & Tamil)
-    if (lower.contains('service') || lower.contains('serviced') || lower.contains('சர்வீஸ்')) events.add('Service');
-    if (lower.contains('repair') || lower.contains('fixed') || lower.contains('ரிப்பேர்') || lower.contains('சரிசெய்தார்')) events.add('Repair');
-    if (lower.contains('purchase') || lower.contains('bought') || lower.contains('வாங்கினேன்')) events.add('Purchase');
-    if (lower.contains('doctor') || lower.contains('prescription') || lower.contains('மருத்துவர்') || lower.contains('மருந்து')) events.add('Medical');
-    if (lower.contains('warranty') || lower.contains('வாரண்டி')) events.add('Warranty');
+    if (lower.contains('service') || lower.contains('serviced') || lower.contains('à®šà®°à¯à®µà¯€à®¸à¯')) events.add('Service');
+    if (lower.contains('repair') || lower.contains('fixed') || lower.contains('à®°à®¿à®ªà¯à®ªà¯‡à®°à¯') || lower.contains('à®šà®°à®¿à®šà¯†à®¯à¯à®¤à®¾à®°à¯')) events.add('Repair');
+    if (lower.contains('purchase') || lower.contains('bought') || lower.contains('à®µà®¾à®™à¯à®•à®¿à®©à¯‡à®©à¯')) events.add('Purchase');
+    if (lower.contains('doctor') || lower.contains('prescription') || lower.contains('à®®à®°à¯à®¤à¯à®¤à¯à®µà®°à¯') || lower.contains('à®®à®°à¯à®¨à¯à®¤à¯')) events.add('Medical');
+    if (lower.contains('warranty') || lower.contains('à®µà®¾à®°à®£à¯à®Ÿà®¿')) events.add('Warranty');
 
     // Title formulation
     String title;
