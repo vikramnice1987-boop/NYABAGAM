@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/config/app_environment.dart';
 import '../../../core/supabase/supabase_service.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 
@@ -51,16 +52,53 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: NySpacing.space24),
 
+          Text('Appearance & Theme', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
+          NyCard(
+            child: ListenableBuilder(
+              listenable: ThemeController.instance,
+              builder: (context, _) {
+                final currentMode = ThemeController.instance.themeMode;
+                return Column(
+                  children: [
+                    RadioListTile<ThemeMode>(
+                      title: const Text('Dark Mode (Default)'),
+                      secondary: const Icon(Icons.dark_mode),
+                      value: ThemeMode.dark,
+                      groupValue: currentMode,
+                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
+                    ),
+                    RadioListTile<ThemeMode>(
+                      title: const Text('Light Mode'),
+                      secondary: const Icon(Icons.light_mode),
+                      value: ThemeMode.light,
+                      groupValue: currentMode,
+                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
+                    ),
+                    RadioListTile<ThemeMode>(
+                      title: const Text('System Default'),
+                      secondary: const Icon(Icons.settings_brightness),
+                      value: ThemeMode.system,
+                      groupValue: currentMode,
+                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: NySpacing.space24),
+
           Text('Privacy & Data Controls', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 8),
           NyCard(
             child: Column(
               children: [
-                ListTile(
+                const ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.lock_outline),
-                  title: const Text('Zero-Data Model Retention'),
-                  subtitle: const Text('OpenAI calls run with store: false. AI keys never enter the app.'),
+                  leading: Icon(Icons.lock_outline),
+                  title: Text('Zero-Data Model Retention'),
+                  subtitle: Text('OpenAI calls run with store: false. AI keys never enter the app.'),
                 ),
                 const Divider(),
                 ListTile(

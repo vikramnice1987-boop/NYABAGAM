@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/theme_controller.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
@@ -39,12 +40,24 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = ThemeController.instance.isDarkMode;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'NYABAGAM',
           style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 0.5),
         ),
+        actions: [
+          IconButton(
+            tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+            icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            onPressed: () {
+              ThemeController.instance.toggleTheme();
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: _loadData,

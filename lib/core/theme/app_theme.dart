@@ -11,12 +11,12 @@ class AppTheme {
       primary: NyColors.primaryLight,
       onPrimary: Colors.white,
       primaryContainer: NyColors.primaryContainerLight,
-      onPrimaryContainer: NyColors.primaryLight,
+      onPrimaryContainer: NyColors.textPrimaryLight,
       secondary: NyColors.accentLight,
       onSecondary: Colors.white,
       surface: NyColors.surfaceLight,
       onSurface: NyColors.textPrimaryLight,
-      surfaceContainerHighest: NyColors.surfaceVariantLight,
+      surfaceContainerHighest: NyColors.surfaceSecondaryLight,
       outline: NyColors.borderLight,
       error: NyColors.statusError,
       onError: Colors.white,
@@ -77,15 +77,15 @@ class AppTheme {
           borderRadius: NyRadius.borderMd,
           borderSide: const BorderSide(color: NyColors.primaryLight, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: NyColors.textMutedLight),
+        hintStyle: const TextStyle(color: NyColors.disabledLight),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: NyColors.surfaceLight,
-        indicatorColor: NyColors.primaryContainerLight,
+        indicatorColor: NyColors.surfaceSecondaryLight,
         elevation: 2,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: NyColors.primaryLight);
+            return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: NyColors.textPrimaryLight);
           }
           return const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: NyColors.textSecondaryLight);
         }),
@@ -103,7 +103,7 @@ class AppTheme {
       onSecondary: Colors.black,
       surface: NyColors.surfaceDark,
       onSurface: NyColors.textPrimaryDark,
-      surfaceContainerHighest: NyColors.surfaceVariantDark,
+      surfaceContainerHighest: NyColors.surfaceSecondaryDark,
       outline: NyColors.borderDark,
       error: NyColors.statusError,
       onError: Colors.white,
@@ -150,7 +150,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: NyColors.surfaceVariantDark,
+        fillColor: NyColors.surfaceSecondaryDark,
         contentPadding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: NySpacing.space16),
         border: OutlineInputBorder(
           borderRadius: NyRadius.borderMd,
@@ -164,7 +164,7 @@ class AppTheme {
           borderRadius: NyRadius.borderMd,
           borderSide: const BorderSide(color: NyColors.accentDark, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: NyColors.textMutedDark),
+        hintStyle: const TextStyle(color: NyColors.textTertiaryDark),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: NyColors.surfaceDark,
