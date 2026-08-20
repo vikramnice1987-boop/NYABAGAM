@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
@@ -32,6 +34,43 @@ class MemoryDetailPage extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
           const SizedBox(height: NySpacing.space20),
+
+          // Attached Image or Bill Review
+          if (memory.attachmentBase64 != null) ...[
+            Text('Attached Document / Photo', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            NyCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.attachment, color: NyColors.accentLight),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          memory.attachmentName ?? 'Attached Document',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      base64Decode(memory.attachmentBase64!),
+                      height: 200,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: NySpacing.space20),
+          ],
 
           // Summary Card
           NyCard(

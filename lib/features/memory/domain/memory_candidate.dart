@@ -43,10 +43,17 @@ class MemoryCandidate {
     this.amount,
     this.currency,
     this.occurredAt,
+    this.attachmentBase64,
+    this.attachmentName,
+    this.attachmentType,
     this.status = MemoryStatus.candidate,
   });
 
-  factory MemoryCandidate.fromText(String content) {
+  factory MemoryCandidate.fromText(String content, {
+    String? attachmentBase64,
+    String? attachmentName,
+    String? attachmentType,
+  }) {
     final normalized = content.trim();
     final summary = normalized.length > 160
         ? '${normalized.substring(0, 157)}...'
@@ -59,6 +66,9 @@ class MemoryCandidate {
       title: 'New memory',
       summary: summary,
       capturedAt: DateTime.now(),
+      attachmentBase64: attachmentBase64,
+      attachmentName: attachmentName,
+      attachmentType: attachmentType,
     );
   }
 
@@ -77,6 +87,9 @@ class MemoryCandidate {
   final double? amount;
   final String? currency;
   final DateTime? occurredAt;
+  final String? attachmentBase64;
+  final String? attachmentName;
+  final String? attachmentType;
   final MemoryStatus status;
 
   MemoryCandidate copyWith({
@@ -91,6 +104,9 @@ class MemoryCandidate {
     double? amount,
     String? currency,
     DateTime? occurredAt,
+    String? attachmentBase64,
+    String? attachmentName,
+    String? attachmentType,
     MemoryStatus? status,
   }) => MemoryCandidate(
     id: id,
@@ -108,6 +124,9 @@ class MemoryCandidate {
     amount: amount ?? this.amount,
     currency: currency ?? this.currency,
     occurredAt: occurredAt ?? this.occurredAt,
+    attachmentBase64: attachmentBase64 ?? this.attachmentBase64,
+    attachmentName: attachmentName ?? this.attachmentName,
+    attachmentType: attachmentType ?? this.attachmentType,
     status: status ?? this.status,
   );
 

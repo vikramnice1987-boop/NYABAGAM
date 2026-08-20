@@ -13,6 +13,9 @@ class MemoryModel {
     this.amount,
     this.currency,
     this.rawSourceSnippet,
+    this.attachmentBase64,
+    this.attachmentName,
+    this.attachmentType,
   });
 
   final String id;
@@ -28,6 +31,9 @@ class MemoryModel {
   final double? amount;
   final String? currency;
   final String? rawSourceSnippet;
+  final String? attachmentBase64;
+  final String? attachmentName;
+  final String? attachmentType;
 
   factory MemoryModel.fromRow(Map<String, dynamic> row) {
     final meta = Map<String, dynamic>.from(row['metadata'] as Map? ?? {});
@@ -45,6 +51,9 @@ class MemoryModel {
       amount: (meta['amount'] is num) ? (meta['amount'] as num).toDouble() : null,
       currency: meta['currency'] as String?,
       rawSourceSnippet: meta['raw_content'] as String?,
+      attachmentBase64: meta['attachment_base64'] as String?,
+      attachmentName: meta['attachment_name'] as String?,
+      attachmentType: meta['attachment_type'] as String?,
     );
   }
 
@@ -63,6 +72,9 @@ class MemoryModel {
       'amount': amount,
       'currency': currency,
       'raw_content': rawSourceSnippet,
+      'attachment_base64': attachmentBase64,
+      'attachment_name': attachmentName,
+      'attachment_type': attachmentType,
     },
   };
 

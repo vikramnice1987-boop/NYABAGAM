@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
@@ -82,8 +84,53 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
             style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
-          const Text('Review and edit the AI-extracted entities before saving permanently.'),
+          const Text('Review and edit the AI-extracted entities and attached files before saving permanently.'),
           const SizedBox(height: NySpacing.space20),
+
+          // Attached Document Review Section
+          if (widget.candidate.attachmentBase64 != null) ...[
+            Text('Attached Document / Photo', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            NyCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.attachment, color: NyColors.accentLight),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.candidate.attachmentName ?? 'Attached Image / Bill',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: NyColors.statusSuccess.withAlpha(30),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text('Verified', style: TextStyle(fontSize: 11, color: NyColors.statusSuccess, fontWeight: FontWeight.w600)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.memory(
+                      base64Decode(widget.candidate.attachmentBase64!),
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: NySpacing.space20),
+          ],
 
           // Title & Summary Inputs
           NyCard(

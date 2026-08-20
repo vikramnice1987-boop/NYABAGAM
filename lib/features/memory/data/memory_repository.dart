@@ -64,6 +64,9 @@ class InMemoryMemoryRepository implements MemoryRepository {
       amount: candidate.amount,
       currency: candidate.currency,
       rawSourceSnippet: candidate.rawContent,
+      attachmentBase64: candidate.attachmentBase64,
+      attachmentName: candidate.attachmentName,
+      attachmentType: candidate.attachmentType,
     );
 
     _memories.removeWhere((m) => m.id == saved.id);

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -24,6 +25,8 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
   bool _isUnderstanding = false;
   String? _attachedFileName;
   Uint8List? _attachedFileBytes;
+  String? _attachedFileBase64;
+  String _attachmentType = 'image';
 
   @override
   void initState() {
@@ -51,8 +54,10 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
         setState(() {
           _attachedFileName = photo.name;
           _attachedFileBytes = bytes;
+          _attachedFileBase64 = base64Encode(bytes);
+          _attachmentType = 'image';
           if (_textController.text.isEmpty) {
-            _textController.text = 'Receipt / Invoice: ${photo.name}';
+            _textController.text = 'Service Receipt / Appliance Photo: ${photo.name}';
           }
         });
       }
@@ -78,6 +83,8 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
         setState(() {
           _attachedFileName = image.name;
           _attachedFileBytes = bytes;
+          _attachedFileBase64 = base64Encode(bytes);
+          _attachmentType = 'image';
           if (_textController.text.isEmpty) {
             _textController.text = 'Uploaded Document: ${image.name}';
           }
@@ -105,6 +112,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     setState(() {
       _attachedFileName = null;
       _attachedFileBytes = null;
+      _attachedFileBase64 = null;
     });
   }
 
@@ -123,9 +131,18 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
 
     setState(() => _isUnderstanding = true);
     try {
-      final candidate = await AiGateway.understand(promptToUnderstand);
+      final candidate = await AiGateway.understand(
+        promptToUnderstand,
+      );
+
+      final candidateWithAttachment = candidate.copyWith(
+        attachmentBase64: _attachedFileBase64,
+        attachmentName: _attachedFileName,
+        attachmentType: _attachmentType,
+      );
+
       if (mounted) {
-        context.push('/understand', extra: candidate);
+        context.push('/understand', extra: candidateWithAttachment);
       }
     } catch (_) {
       if (mounted) {
@@ -183,7 +200,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: null,
                           textAlignVertical: TextAlignVertical.top,
                           decoration: const InputDecoration(
-                            hintText: 'e.g., Ravi serviced my AC today for ₹800.\nor Paste warranty details, doctor prescription, etc.',
+                            hintText: 'e.g., Ravi serviced my AC today for ₹800.\nor Paste warranty details, doctor prescription, doctor notes, etc.',
                           ),
                         ),
                       ),
@@ -251,7 +268,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           const Text(
-                                            'Attached & Ready to Analyze',
+                                            'Attached & Ready to Sync',
                                             style: TextStyle(fontSize: 12, color: NyColors.statusSuccess),
                                           ),
                                         ],
@@ -270,7 +287,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                                     borderRadius: BorderRadius.circular(8),
                                     child: Image.memory(
                                       _attachedFileBytes!,
-                                      height: 140,
+                                      height: 160,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
                                     ),
@@ -299,50 +316,49 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                   ),
 
                   // Tab 3: Voice Note
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        _isRecording ? Icons.mic : Icons.mic_none,
-                        size: 64,
-                        color: _isRecording ? NyColors.statusError : theme.colorScheme.secondary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        _isRecording ? 'Listening & Recording...' : 'Tap to Record Voice Note',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _isRecording ? 'Speak naturally about the event or detail.' : 'Capture details hands-free while on the move.',
-                        style: theme.textTheme.bodyMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: NySpacing.space24),
-                      IconButton.filled(
-                        iconSize: 36,
-                        onPressed: _toggleVoiceRecording,
-                        icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-                        style: IconButton.styleFrom(
-                          backgroundColor: _isRecording ? NyColors.statusError : NyColors.primaryLight,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(NySpacing.space20),
+                  SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 20),
+                        Icon(
+                          _isRecording ? Icons.mic : Icons.mic_none,
+                          size: 64,
+                          color: _isRecording ? NyColors.statusError : theme.colorScheme.secondary,
                         ),
-                      ),
-                      if (_textController.text.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          _isRecording ? 'Listening & Transcribing...' : 'Tap to Record Voice Note',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _isRecording ? 'Speak naturally about the event or detail.' : 'Speak your thoughts. You can also edit the transcribed text below.',
+                          style: theme.textTheme.bodyMedium,
+                          textAlign: TextAlign.center,
+                        ),
                         const SizedBox(height: NySpacing.space24),
-                        NyCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Transcript Preview:', style: TextStyle(fontWeight: FontWeight.w600)),
-                              const SizedBox(height: 6),
-                              Text(_textController.text, style: const TextStyle(fontStyle: FontStyle.italic)),
-                            ],
+                        IconButton.filled(
+                          iconSize: 36,
+                          onPressed: _toggleVoiceRecording,
+                          icon: Icon(_isRecording ? Icons.stop : Icons.mic),
+                          style: IconButton.styleFrom(
+                            backgroundColor: _isRecording ? NyColors.statusError : NyColors.primaryLight,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(NySpacing.space20),
+                          ),
+                        ),
+                        const SizedBox(height: NySpacing.space24),
+                        TextField(
+                          controller: _textController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Transcribed Text (Editable):',
+                            hintText: 'e.g., Ravi serviced my AC today for ₹800.',
                           ),
                         ),
                       ],
-                    ],
+                    ),
                   ),
                 ],
               ),
