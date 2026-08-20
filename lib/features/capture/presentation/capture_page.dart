@@ -26,21 +26,19 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
 
   bool _isRecording = false;
   bool _isUnderstanding = false;
-  String _selectedLanguageCode = 'ta-IN';
-  String _liveSpeechStatus = 'Tap microphone and speak';
+  String _selectedLanguageCode = 'en-IN'; // Defaulting to English (India)
+  String _liveSpeechStatus = 'Tap the microphone to speak';
   String? _attachedFileName;
   Uint8List? _attachedFileBytes;
   String? _attachedFileBase64;
   String _attachmentType = 'image';
 
   final List<Map<String, String>> _supportedLanguages = [
-    {'code': 'ta-IN', 'name': 'Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â (Tamil)'},
-    {'code': 'en-IN', 'name': 'English (India)'},
-    {'code': 'en-US', 'name': 'English (US)'},
-    {'code': 'hi-IN', 'name': 'Ã Â¤Â¹Ã Â¤Â¿Ã Â¤â€šÃ Â¤Â¦Ã Â¥â‚¬ (Hindi)'},
-    {'code': 'te-IN', 'name': 'Ã Â°Â¤Ã Â±â€ Ã Â°Â²Ã Â±ÂÃ Â°â€”Ã Â±Â (Telugu)'},
-    {'code': 'ml-IN', 'name': 'Ã Â´Â®Ã Â´Â²Ã Â´Â¯Ã Â´Â¾Ã Â´Â³Ã Â´â€š (Malayalam)'},
-    {'code': 'kn-IN', 'name': 'Ã Â²â€¢Ã Â²Â¨Ã Â³ÂÃ Â²Â¨Ã Â²Â¡ (Kannada)'},
+    {'code': 'en-IN', 'label': 'English', 'sub': 'en-IN'},
+    {'code': 'ta-IN', 'label': 'Tamil', 'sub': 'தமிழ்'},
+    {'code': 'hi-IN', 'label': 'Hindi', 'sub': 'हिंदी'},
+    {'code': 'te-IN', 'label': 'Telugu', 'sub': 'తెలుగు'},
+    {'code': 'en-US', 'label': 'English (US)', 'sub': 'en-US'},
   ];
 
   @override
@@ -116,7 +114,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     }
   }
 
-    String _deduplicateWords(String input) {
+  String _deduplicateWords(String input) {
     final words = input.split(RegExp(r'\s+'));
     final unique = <String>[];
     for (final w in words) {
@@ -134,12 +132,12 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
       SpeechService.instance.stopListening();
       setState(() {
         _isRecording = false;
-        _liveSpeechStatus = 'Recording saved. You can edit the text below.';
+        _liveSpeechStatus = 'Recording finished. Review or edit text below.';
       });
     } else {
       setState(() {
         _isRecording = true;
-        _liveSpeechStatus = 'Listening in ${_getLanguageName(_selectedLanguageCode)}... Speak clearly now.';
+        _liveSpeechStatus = 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}... Speak now.';
       });
       SpeechService.instance.startListening(
         language: _selectedLanguageCode,
@@ -162,11 +160,11 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     }
   }
 
-  String _getLanguageName(String code) {
+  String _getLanguageLabel(String code) {
     return _supportedLanguages.firstWhere(
       (l) => l['code'] == code,
-      orElse: () => {'name': code},
-    )['name']!;
+      orElse: () => {'label': code},
+    )['label']!;
   }
 
   void _removeAttachment() {
@@ -222,7 +220,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Capture Memory', style: TextStyle(fontWeight: FontWeight.w700)),
+        title: const Text('Capture Memory', style: TextStyle(fontWeight: FontWeight.w800)),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
           child: Container(
@@ -244,7 +242,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
               labelStyle: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               tabs: const [
                 Tab(icon: Icon(Icons.edit_note_rounded, size: 18), text: 'Text'),
-                Tab(icon: Icon(Icons.mic_rounded, size: 18), text: 'Voice (Ã Â®â€¢Ã Â¯ÂÃ Â®Â°Ã Â®Â²Ã Â¯Â)'),
+                Tab(icon: Icon(Icons.mic_rounded, size: 18), text: 'Voice'),
                 Tab(icon: Icon(Icons.photo_camera_rounded, size: 18), text: 'Camera / Scan'),
               ],
             ),
@@ -266,11 +264,11 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                       children: [
                         Text(
                           'What would you like to remember?',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Type in English, Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â, or any language. AI will extract structured facts.',
+                          'Type in English, Tamil, or any language. AI will extract structured facts.',
                           style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
                         ),
                         const SizedBox(height: NySpacing.space16),
@@ -280,7 +278,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: 5,
                           maxLines: 8,
                           decoration: InputDecoration(
-                            hintText: 'e.g., Ravi serviced my AC today for Ã¢â€šÂ¹800.\nor Ã Â®Â°Ã Â®ÂµÃ Â®Â¿ Ã Â®â€¡Ã Â®Â©Ã Â¯ÂÃ Â®Â±Ã Â¯Â Ã Â®ÂÃ Â®Å¡Ã Â®Â¿ Ã Â®Å¡Ã Â®Â°Ã Â¯ÂÃ Â®ÂµÃ Â¯â‚¬Ã Â®Â¸Ã Â¯Â Ã Â®Å¡Ã Â¯â€ Ã Â®Â¯Ã Â¯ÂÃ Â®Â¤Ã Â®Â¾Ã Â®Â°Ã Â¯Â Ã¢â€šÂ¹800.',
+                            hintText: 'e.g., Ravi serviced my AC today for Rs. 800\nor Doctor John prescribed medication on Aug 20.',
                             border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
                           ),
                         ),
@@ -295,46 +293,55 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                   SingleChildScrollView(
                     child: Column(
                       children: [
+                        // Language Selector with Segmented Chips
                         NyCard(
-                          child: Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.translate_rounded, color: NyColors.accentLight),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Speaking Language:',
-                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                                ),
+                              Row(
+                                children: [
+                                  const Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Speech Language:',
+                                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: theme.colorScheme.onSurface),
+                                  ),
+                                ],
                               ),
-                              DropdownButton<String>(
-                                value: _selectedLanguageCode,
-                                underline: const SizedBox.shrink(),
-                                icon: const Icon(Icons.arrow_drop_down),
-                                items: _supportedLanguages.map((lang) {
-                                  return DropdownMenuItem<String>(
-                                    value: lang['code'],
-                                    child: Text(
-                                      lang['name']!,
-                                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _supportedLanguages.map((lang) {
+                                  final isSelected = _selectedLanguageCode == lang['code'];
+                                  return ChoiceChip(
+                                    selected: isSelected,
+                                    label: Text('${lang['label']} (${lang['sub']})'),
+                                    labelStyle: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                                      fontSize: 12,
+                                      color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                                     ),
+                                    selectedColor: theme.colorScheme.primary,
+                                    onSelected: (selected) {
+                                      if (selected) {
+                                        setState(() {
+                                          _selectedLanguageCode = lang['code']!;
+                                          if (_isRecording) {
+                                            _toggleVoiceRecording();
+                                          }
+                                        });
+                                      }
+                                    },
                                   );
                                 }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() {
-                                      _selectedLanguageCode = val;
-                                      if (_isRecording) {
-                                        _toggleVoiceRecording();
-                                      }
-                                    });
-                                  }
-                                },
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: NySpacing.space20),
 
+                        // Glowing Animated Microphone Button
                         GestureDetector(
                           onTap: _toggleVoiceRecording,
                           child: AnimatedContainer(
@@ -363,9 +370,9 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                         const SizedBox(height: NySpacing.space16),
 
                         Text(
-                          _isRecording ? 'Listening in ${_getLanguageName(_selectedLanguageCode)}...' : 'Tap to Start Speaking',
+                          _isRecording ? 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}...' : 'Tap to Start Speaking',
                           style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w800,
                             color: _isRecording ? NyColors.statusError : theme.colorScheme.onSurface,
                           ),
                         ),
@@ -385,8 +392,8 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: 3,
                           maxLines: 6,
                           decoration: InputDecoration(
-                            labelText: 'Live Spoken Transcript (Editable):',
-                            hintText: 'Speak into your microphone in ${_getLanguageName(_selectedLanguageCode)}...',
+                            labelText: 'Live Transcript (Editable):',
+                            hintText: 'Speak into your microphone in ${_getLanguageLabel(_selectedLanguageCode)}...',
                             border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
                           ),
                         ),
@@ -404,7 +411,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                       children: [
                         Text(
                           'Scan Bill, Warranty, or Appliance',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         const SizedBox(height: 4),
                         Text(
