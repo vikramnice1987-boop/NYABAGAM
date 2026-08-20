@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/ai/ai_gateway.dart';
+import '../../../core/speech/speech_service.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../shared/components/ny_button.dart';
@@ -23,6 +24,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
 
   bool _isRecording = false;
   bool _isUnderstanding = false;
+  String _liveSpeechStatus = 'Tap the microphone to speak';
   String? _attachedFileName;
   Uint8List? _attachedFileBytes;
   String? _attachedFileBase64;
@@ -36,6 +38,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
 
   @override
   void dispose() {
+    SpeechService.instance.stopListening();
     _tabController.dispose();
     _textController.dispose();
     super.dispose();
@@ -57,7 +60,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
           _attachedFileBase64 = base64Encode(bytes);
           _attachmentType = 'image';
           if (_textController.text.isEmpty) {
-            _textController.text = 'Service Receipt / Appliance Photo: ${photo.name}';
+            _textController.text = 'Photo Attachment: ${photo.name}';
           }
         });
       }
@@ -100,12 +103,35 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
   }
 
   void _toggleVoiceRecording() {
-    setState(() {
-      _isRecording = !_isRecording;
-      if (!_isRecording && _textController.text.isEmpty) {
-        _textController.text = 'Ravi serviced my AC today for ₹800.';
-      }
-    });
+    if (_isRecording) {
+      SpeechService.instance.stopListening();
+      setState(() {
+        _isRecording = false;
+        _liveSpeechStatus = 'Recording finished. Review or edit text below.';
+      });
+    } else {
+      setState(() {
+        _isRecording = true;
+        _liveSpeechStatus = 'Listening to your voice... Speak clearly now.';
+      });
+      SpeechService.instance.startListening(
+        onResult: (transcript, isFinal) {
+          if (mounted && transcript.isNotEmpty) {
+            setState(() {
+              _textController.text = transcript;
+            });
+          }
+        },
+        onDone: () {
+          if (mounted) {
+            setState(() {
+              _isRecording = false;
+              _liveSpeechStatus = 'Tap microphone to speak again';
+            });
+          }
+        },
+      );
+    }
   }
 
   void _removeAttachment() {
@@ -120,7 +146,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     final content = _textController.text.trim();
     if (content.isEmpty && _attachedFileName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write text, take a photo, or attach a document.')),
+        const SnackBar(content: Text('Please write text, speak into the mic, or attach a photo.')),
       );
       return;
     }
@@ -131,9 +157,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
 
     setState(() => _isUnderstanding = true);
     try {
-      final candidate = await AiGateway.understand(
-        promptToUnderstand,
-      );
+      final candidate = await AiGateway.understand(promptToUnderstand);
 
       final candidateWithAttachment = candidate.copyWith(
         attachmentBase64: _attachedFileBase64,
@@ -188,7 +212,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Your input becomes a structured candidate. Nothing is saved until you review and confirm.',
+                        'Type your note, instruction, or service details. You will review extracted facts before saving.',
                       ),
                       const SizedBox(height: NySpacing.space16),
                       Expanded(
@@ -200,7 +224,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: null,
                           textAlignVertical: TextAlignVertical.top,
                           decoration: const InputDecoration(
-                            hintText: 'e.g., Ravi serviced my AC today for ₹800.\nor Paste warranty details, doctor prescription, doctor notes, etc.',
+                            hintText: 'e.g., Doctor John prescribed medication for fever on Aug 20.\nor Suresh serviced my washing machine for ₹1200.',
                           ),
                         ),
                       ),
@@ -308,38 +332,42 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           controller: _textController,
                           maxLines: 3,
                           decoration: const InputDecoration(
-                            hintText: 'e.g., CoolCare AC service bill received from Ravi.',
+                            hintText: 'e.g., Received service invoice from CoolCare.',
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                  // Tab 3: Voice Note
+                  // Tab 3: Voice Note with Real Voice Recognition
                   SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 16),
                         Icon(
                           _isRecording ? Icons.mic : Icons.mic_none,
                           size: 64,
                           color: _isRecording ? NyColors.statusError : theme.colorScheme.secondary,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
                         Text(
-                          _isRecording ? 'Listening & Transcribing...' : 'Tap to Record Voice Note',
+                          _isRecording ? 'Listening to Your Voice...' : 'Tap to Record Voice Note',
                           style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
-                          _isRecording ? 'Speak naturally about the event or detail.' : 'Speak your thoughts. You can also edit the transcribed text below.',
-                          style: theme.textTheme.bodyMedium,
+                          _liveSpeechStatus,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: _isRecording ? NyColors.statusError : theme.colorScheme.onSurface.withAlpha(180),
+                            fontWeight: _isRecording ? FontWeight.w600 : FontWeight.normal,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: NySpacing.space24),
+                        const SizedBox(height: NySpacing.space20),
                         IconButton.filled(
-                          iconSize: 36,
+                          iconSize: 40,
                           onPressed: _toggleVoiceRecording,
                           icon: Icon(_isRecording ? Icons.stop : Icons.mic),
                           style: IconButton.styleFrom(
@@ -348,13 +376,13 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                             padding: const EdgeInsets.all(NySpacing.space20),
                           ),
                         ),
-                        const SizedBox(height: NySpacing.space24),
+                        const SizedBox(height: NySpacing.space20),
                         TextField(
                           controller: _textController,
-                          maxLines: 3,
+                          maxLines: 4,
                           decoration: const InputDecoration(
-                            labelText: 'Transcribed Text (Editable):',
-                            hintText: 'e.g., Ravi serviced my AC today for ₹800.',
+                            labelText: 'Live Spoken Transcript (Editable):',
+                            hintText: 'Speak into your microphone or type instructions here...',
                           ),
                         ),
                       ],
