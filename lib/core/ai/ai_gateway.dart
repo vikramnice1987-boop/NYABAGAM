@@ -82,7 +82,7 @@ abstract final class AiGateway {
     }
   }
 
-  // --- Intelligent Local Understanding Engine (General-Purpose Extraction) ---
+  // --- Multi-Language & Multi-Entity Offline Understanding Engine ---
   static MemoryCandidate _localUnderstand(String content, MemoryCandidate base) {
     final lower = content.toLowerCase();
     final words = content.split(RegExp(r'\s+'));
@@ -91,16 +91,24 @@ abstract final class AiGateway {
     final orgs = <String>{};
     final events = <String>{};
     double? amount;
+    String? detectedPhone;
     final relationships = <DetectedRelationship>[];
 
-    // 1. Amount Extraction
-    final amtRegex = RegExp(r'(?:[₹$€£]|rs\.?|inr|usd)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
+    // 1. Phone / WhatsApp Number Extraction (e.g. +91 9876543210, 9876543210)
+    final phoneRegex = RegExp(r'(?:\+?91[\-\s]?)?[6-9]\d{9}\b');
+    final phoneMatch = phoneRegex.firstMatch(content);
+    if (phoneMatch != null) {
+      detectedPhone = phoneMatch.group(0)?.replaceAll(RegExp(r'[\-\s]'), '');
+    }
+
+    // 2. Amount Extraction (₹, $, Rs, INR, ரூபாய்)
+    final amtRegex = RegExp(r'(?:[₹$€£]|rs\.?|inr|ரூபாய்|ரூ\.?)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
     final amtMatch = amtRegex.firstMatch(content);
     if (amtMatch != null) {
       final rawNum = amtMatch.group(1)?.replaceAll(',', '');
       if (rawNum != null) amount = double.tryParse(rawNum);
     } else {
-      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
+      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth|செலவு|கொடுத்தேன்)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
       final plainMatch = plainNumRegex.firstMatch(content);
       if (plainMatch != null) {
         final rawNum = plainMatch.group(1)?.replaceAll(',', '');
@@ -108,32 +116,41 @@ abstract final class AiGateway {
       }
     }
 
-    // 2. Common Things / Appliances / Items
+    // 3. Multi-language Things / Appliances / Items (English & Tamil)
     final knownThings = {
-      'ac': 'AC', 'air conditioner': 'Air Conditioner', 'car': 'Car', 'bike': 'Bike',
-      'laptop': 'Laptop', 'phone': 'Phone', 'fridge': 'Refrigerator', 'refrigerator': 'Refrigerator',
-      'tv': 'Television', 'television': 'Television', 'washing machine': 'Washing Machine',
-      'geyser': 'Geyser', 'inverter': 'Inverter', 'motor': 'Water Motor', 'water purifier': 'Water Purifier',
-      'ro': 'RO Purifier', 'wifi': 'WiFi Router', 'router': 'Router', 'scooter': 'Scooter',
-      'fan': 'Ceiling Fan', 'tablet': 'Tablet', 'watch': 'Smartwatch', 'sofa': 'Sofa',
+      'ac': 'AC', 'air conditioner': 'Air Conditioner', 'ஏசி': 'AC',
+      'car': 'Car', 'கார்': 'Car',
+      'bike': 'Bike', 'பைக்': 'Bike', 'வண்டி': 'Two Wheeler',
+      'laptop': 'Laptop', 'லேப்டாப்': 'Laptop',
+      'phone': 'Phone', 'போன்': 'Phone', 'மொபைல்': 'Mobile Phone',
+      'fridge': 'Refrigerator', 'refrigerator': 'Refrigerator', 'பிரிட்ஜ்': 'Refrigerator',
+      'tv': 'Television', 'television': 'Television', 'டிவி': 'Television',
+      'washing machine': 'Washing Machine', 'வாஷிங் மெஷின்': 'Washing Machine',
+      'geyser': 'Geyser', 'கீசர்': 'Geyser',
+      'inverter': 'Inverter', 'இன்வெர்ட்டர்': 'Inverter',
+      'motor': 'Water Motor', 'மோட்டார்': 'Water Motor',
+      'water purifier': 'Water Purifier', 'ro': 'RO Purifier',
+      'fan': 'Ceiling Fan', 'ஃபேன்': 'Fan',
     };
     for (final entry in knownThings.entries) {
       if (lower.contains(entry.key)) things.add(entry.value);
     }
 
-    // 3. Known Organizations & Stores
+    // 4. Multi-language Organizations & Stores
     final knownOrgs = {
-      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'lg': 'LG', 'sony': 'Sony',
-      'apple': 'Apple', 'amazon': 'Amazon', 'flipkart': 'Flipkart', 'honda': 'Honda',
-      'tata': 'Tata', 'maruti': 'Maruti Suzuki', 'hyundai': 'Hyundai', 'apollo': 'Apollo Clinic',
-      'urban company': 'Urban Company', 'croma': 'Croma', 'reliance digital': 'Reliance Digital',
+      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'சாம்சங்': 'Samsung',
+      'lg': 'LG', 'எல்ஜி': 'LG', 'sony': 'Sony', 'சோனி': 'Sony',
+      'apple': 'Apple', 'amazon': 'Amazon', 'flipkart': 'Flipkart',
+      'honda': 'Honda', 'ஹோண்டா': 'Honda', 'tata': 'Tata', 'டாடா': 'Tata',
+      'apollo': 'Apollo Clinic', 'அப்போலோ': 'Apollo',
+      'urban company': 'Urban Company', 'croma': 'Croma',
     };
     for (final entry in knownOrgs.entries) {
       if (lower.contains(entry.key)) orgs.add(entry.value);
     }
 
-    // 4. Extract Proper Nouns / Names following keywords (by, to, from, with, doctor, dr, mr, technician, mechanic, plumber)
-    final nameKeywords = {'by', 'to', 'from', 'with', 'doctor', 'dr.', 'dr', 'mr.', 'mr', 'mrs', 'technician', 'mechanic', 'plumber', 'electrician', 'carpenter', 'driver'};
+    // 5. Extract Names following keywords
+    final nameKeywords = {'by', 'to', 'from', 'with', 'doctor', 'dr.', 'dr', 'mr.', 'mr', 'mrs', 'technician', 'mechanic', 'plumber', 'electrician'};
     for (var i = 0; i < words.length; i++) {
       final cleanWord = words[i].replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
       if (nameKeywords.contains(cleanWord) && i + 1 < words.length) {
@@ -143,7 +160,7 @@ abstract final class AiGateway {
         }
       }
     }
-    // Also check first word if capitalized and followed by a verb (e.g. "Ravi serviced...", "Suresh fixed...")
+    // Also check first word if capitalized
     if (words.isNotEmpty) {
       final first = words[0].replaceAll(RegExp(r'[^\w]'), '');
       if (first.isNotEmpty && first[0] == first[0].toUpperCase() && first.length > 2 && !knownThings.containsKey(first.toLowerCase())) {
@@ -154,14 +171,12 @@ abstract final class AiGateway {
       }
     }
 
-    // 5. Events / Actions
-    if (lower.contains('service') || lower.contains('serviced')) events.add('Service');
-    if (lower.contains('repair') || lower.contains('fixed') || lower.contains('repaired')) events.add('Repair');
-    if (lower.contains('purchase') || lower.contains('bought') || lower.contains('buy')) events.add('Purchase');
-    if (lower.contains('doctor') || lower.contains('prescription') || lower.contains('consultation') || lower.contains('clinic')) events.add('Medical');
-    if (lower.contains('warranty') || lower.contains('guarantee')) events.add('Warranty');
-    if (lower.contains('insurance') || lower.contains('policy')) events.add('Insurance');
-    if (lower.contains('rent') || lower.contains('deposit')) events.add('Rent');
+    // 6. Events / Actions (English & Tamil)
+    if (lower.contains('service') || lower.contains('serviced') || lower.contains('சர்வீஸ்')) events.add('Service');
+    if (lower.contains('repair') || lower.contains('fixed') || lower.contains('ரிப்பேர்') || lower.contains('சரிசெய்தார்')) events.add('Repair');
+    if (lower.contains('purchase') || lower.contains('bought') || lower.contains('வாங்கினேன்')) events.add('Purchase');
+    if (lower.contains('doctor') || lower.contains('prescription') || lower.contains('மருத்துவர்') || lower.contains('மருந்து')) events.add('Medical');
+    if (lower.contains('warranty') || lower.contains('வாரண்டி')) events.add('Warranty');
 
     // Title formulation
     String title;
@@ -171,8 +186,6 @@ abstract final class AiGateway {
       title = '${events.first} with ${people.first}';
     } else if (things.isNotEmpty) {
       title = '${things.first} Record';
-    } else if (events.isNotEmpty) {
-      title = '${events.first} Note';
     } else {
       title = content.length > 30 ? '${content.substring(0, 27)}...' : content;
       if (title.isEmpty) title = 'New Memory';
@@ -188,6 +201,7 @@ abstract final class AiGateway {
       relationships: relationships,
       amount: amount,
       currency: amount != null ? 'INR' : null,
+      contactPhone: detectedPhone ?? base.contactPhone,
     );
   }
 
@@ -203,17 +217,19 @@ abstract final class AiGateway {
     final title = top['title'] ?? '';
     final summary = top['summary'] ?? '';
     final people = List<String>.from(top['people'] ?? []);
+    final phone = top['contact_phone'] as String?;
     return AskResult(
       answer: '$title: $summary',
       confidence: 'high',
       relatedEntities: people,
       suggestedActions: [
-        if (people.isNotEmpty)
+        if (people.isNotEmpty || phone != null)
           ActionProposal(
             actionType: 'message',
-            title: 'Contact ${people[0]} on WhatsApp',
+            title: 'Contact ${people.isNotEmpty ? people[0] : 'Technician'} on WhatsApp',
             channel: 'whatsapp',
-            recipientName: people[0],
+            recipientName: people.isNotEmpty ? people[0] : null,
+            recipientContact: phone,
           ),
       ],
     );
@@ -224,19 +240,22 @@ abstract final class AiGateway {
     final past = hasPast ? evidence.first : <String, dynamic>{};
     final person = (past['people'] as List? ?? []).isNotEmpty ? past['people'][0] as String : 'the service technician';
     final thing = (past['things'] as List? ?? []).isNotEmpty ? past['things'][0] as String : 'appliance';
+    final phone = past['contact_phone'] as String?;
 
     return ContextBridgeResult(
       detectedProblem: statement,
       relevantMemorySummary: hasPast ? (past['summary'] as String? ?? 'Past memory located.') : 'No previous records found.',
       whyRelevant: hasPast ? 'Found past records related to $thing.' : 'You can log a new record or action.',
       targetPerson: hasPast ? person : null,
+      targetPhone: phone,
       suggestedActions: [
         if (hasPast)
           ActionProposal(
             actionType: 'message',
-            title: 'Contact $person on WhatsApp',
+            title: 'Message $person on WhatsApp',
             channel: 'whatsapp',
             recipientName: person,
+            recipientContact: phone,
             draftMessage: 'Hi $person, regarding my $thing, could you please check it?',
           ),
         ActionProposal(

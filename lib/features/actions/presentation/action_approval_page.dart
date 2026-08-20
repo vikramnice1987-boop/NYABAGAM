@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
@@ -18,6 +19,7 @@ class ActionApprovalPage extends StatefulWidget {
 
 class _ActionApprovalPageState extends State<ActionApprovalPage> {
   late final TextEditingController _messageController;
+  late final TextEditingController _phoneController;
   bool _isApproved = false;
 
   @override
@@ -25,31 +27,42 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
     super.initState();
     _messageController = TextEditingController(
       text: widget.proposal.draftMessage ??
-          'Hi ${widget.proposal.recipientName ?? ''}, my appliance needs service. Are you available?',
+          'Hi ${widget.proposal.recipientName ?? ''}, regarding my appliance, I would like to schedule a service check. Are you available?',
+    );
+    _phoneController = TextEditingController(
+      text: widget.proposal.recipientContact ?? '',
     );
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   Future<void> _approveAndDispatch() async {
     setState(() => _isApproved = true);
     final text = _messageController.text;
-    final uri = Uri.parse('whatsapp://send?text=${Uri.encodeComponent(text)}');
+    final phone = _phoneController.text.trim().replaceAll(RegExp(r'[^\d]'), '');
+
+    Uri uri;
+    if (phone.isNotEmpty) {
+      uri = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(text)}');
+    } else {
+      uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(text)}');
+    }
 
     try {
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (_) {}
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Action approved and dispatched. Track the outcome once completed.'),
+          content: Text('Action approved and dispatched to WhatsApp.'),
         ),
       );
     }
@@ -60,20 +73,22 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Action Approval'),
+        title: const Text('Action Approval', style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(NySpacing.space20),
+        padding: const EdgeInsets.all(NySpacing.space16),
         children: [
           Text(
             'Review Action Before Execution',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 8),
-          const Text('NYABAGAM never sends messages or contacts people without your explicit approval.'),
-          const SizedBox(height: NySpacing.space20),
+          const SizedBox(height: 4),
+          Text(
+            'NYABAGAM never sends messages without your explicit approval.',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
+          ),
+          const SizedBox(height: NySpacing.space16),
 
-          // Proposal Info
           NyCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +100,7 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
                   alignment: WrapAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Action Type: ${widget.proposal.actionType.toUpperCase()}',
+                      'Action: ${widget.proposal.actionType.toUpperCase()}',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
@@ -93,26 +108,49 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: NyColors.entityPerson.withAlpha(30),
+                        color: NyColors.statusSuccess.withAlpha(25),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Text(
-                        'Recipient: ${widget.proposal.recipientName ?? 'Contact'}',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: NyColors.entityPerson),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.chat_rounded, size: 14, color: NyColors.statusSuccess),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Recipient: ${widget.proposal.recipientName ?? 'Technician'}',
+                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: NyColors.statusSuccess),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                const Text('Message Draft (You can edit before sending):', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 14),
+
+                const Text('WhatsApp Phone Number:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.phone_rounded, size: 18),
+                    hintText: 'e.g. +91 98400 12345 (Optional)',
+                    border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                const Text('Message Draft (Editable):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                const SizedBox(height: 6),
                 TextField(
                   controller: _messageController,
                   maxLines: 4,
-                  decoration: const InputDecoration(
-                    hintText: 'Edit message draft...',
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   ),
                 ),
               ],
@@ -123,10 +161,10 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
           if (!_isApproved) ...[
             NyButton(
               label: 'Approve & Send via WhatsApp',
-              icon: Icons.send,
+              icon: Icons.send_rounded,
               onPressed: _approveAndDispatch,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             NyButton(
               label: 'Cancel Action',
               variant: NyButtonVariant.outline,
@@ -137,12 +175,12 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
               backgroundColor: NyColors.statusSuccess.withAlpha(20),
               child: const Row(
                 children: [
-                  Icon(Icons.check_circle, color: NyColors.statusSuccess),
+                  Icon(Icons.check_circle_rounded, color: NyColors.statusSuccess, size: 28),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Action approved and marked as Dispatched.',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: NyColors.statusSuccess),
+                      'Action dispatched to WhatsApp. Log the outcome once the service completes.',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: NyColors.statusSuccess, fontSize: 13),
                     ),
                   ),
                 ],
@@ -151,7 +189,7 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
             const SizedBox(height: NySpacing.space20),
             NyButton(
               label: 'Record Service Outcome (When Done)',
-              icon: Icons.assignment_turned_in_outlined,
+              icon: Icons.assignment_turned_in_rounded,
               onPressed: () => context.push('/record-outcome', extra: 'AC'),
             ),
           ],

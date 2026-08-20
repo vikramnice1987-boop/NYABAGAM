@@ -67,6 +67,7 @@ class InMemoryMemoryRepository implements MemoryRepository {
       attachmentBase64: candidate.attachmentBase64,
       attachmentName: candidate.attachmentName,
       attachmentType: candidate.attachmentType,
+      contactPhone: candidate.contactPhone,
     );
 
     _memories.removeWhere((m) => m.id == saved.id);
@@ -116,6 +117,7 @@ class InMemoryMemoryRepository implements MemoryRepository {
       'people': m.people,
       'things': m.things,
       'organizations': m.organizations,
+      'contact_phone': m.contactPhone,
     }).toList();
 
     return AiGateway.generateContextBridge(statement, evidence);

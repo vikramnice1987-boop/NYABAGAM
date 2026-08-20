@@ -16,6 +16,7 @@ class MemoryModel {
     this.attachmentBase64,
     this.attachmentName,
     this.attachmentType,
+    this.contactPhone,
   });
 
   final String id;
@@ -34,6 +35,7 @@ class MemoryModel {
   final String? attachmentBase64;
   final String? attachmentName;
   final String? attachmentType;
+  final String? contactPhone;
 
   factory MemoryModel.fromRow(Map<String, dynamic> row) {
     final meta = Map<String, dynamic>.from(row['metadata'] as Map? ?? {});
@@ -54,6 +56,7 @@ class MemoryModel {
       attachmentBase64: meta['attachment_base64'] as String?,
       attachmentName: meta['attachment_name'] as String?,
       attachmentType: meta['attachment_type'] as String?,
+      contactPhone: meta['contact_phone'] as String?,
     );
   }
 
@@ -75,6 +78,7 @@ class MemoryModel {
       'attachment_base64': attachmentBase64,
       'attachment_name': attachmentName,
       'attachment_type': attachmentType,
+      'contact_phone': contactPhone,
     },
   };
 
@@ -88,6 +92,7 @@ class ContextBridgeResult {
     required this.whyRelevant,
     required this.suggestedActions,
     this.targetPerson,
+    this.targetPhone,
   });
 
   final String detectedProblem;
@@ -95,6 +100,7 @@ class ContextBridgeResult {
   final String whyRelevant;
   final List<ActionProposal> suggestedActions;
   final String? targetPerson;
+  final String? targetPhone;
 
   factory ContextBridgeResult.fromJson(Map<String, dynamic> json) {
     final rawActions = json['suggested_actions'] as List? ?? [];
@@ -103,6 +109,7 @@ class ContextBridgeResult {
       relevantMemorySummary: json['relevant_memory_summary'] as String? ?? '',
       whyRelevant: json['why_relevant'] as String? ?? '',
       targetPerson: json['target_person'] as String?,
+      targetPhone: json['target_phone'] as String?,
       suggestedActions: rawActions
           .map((a) => ActionProposal.fromJson(Map<String, dynamic>.from(a as Map)))
           .toList(),

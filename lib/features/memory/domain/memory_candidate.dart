@@ -46,6 +46,7 @@ class MemoryCandidate {
     this.attachmentBase64,
     this.attachmentName,
     this.attachmentType,
+    this.contactPhone,
     this.status = MemoryStatus.candidate,
   });
 
@@ -53,6 +54,7 @@ class MemoryCandidate {
     String? attachmentBase64,
     String? attachmentName,
     String? attachmentType,
+    String? contactPhone,
   }) {
     final normalized = content.trim();
     final summary = normalized.length > 160
@@ -69,6 +71,7 @@ class MemoryCandidate {
       attachmentBase64: attachmentBase64,
       attachmentName: attachmentName,
       attachmentType: attachmentType,
+      contactPhone: contactPhone,
     );
   }
 
@@ -90,6 +93,7 @@ class MemoryCandidate {
   final String? attachmentBase64;
   final String? attachmentName;
   final String? attachmentType;
+  final String? contactPhone;
   final MemoryStatus status;
 
   MemoryCandidate copyWith({
@@ -107,6 +111,7 @@ class MemoryCandidate {
     String? attachmentBase64,
     String? attachmentName,
     String? attachmentType,
+    String? contactPhone,
     MemoryStatus? status,
   }) => MemoryCandidate(
     id: id,
@@ -127,6 +132,7 @@ class MemoryCandidate {
     attachmentBase64: attachmentBase64 ?? this.attachmentBase64,
     attachmentName: attachmentName ?? this.attachmentName,
     attachmentType: attachmentType ?? this.attachmentType,
+    contactPhone: contactPhone ?? this.contactPhone,
     status: status ?? this.status,
   );
 
@@ -159,6 +165,7 @@ class MemoryCandidate {
       amount: parsedAmount,
       currency: data['currency'] as String? ?? currency,
       occurredAt: parsedOccurredAt,
+      contactPhone: data['contact_phone'] as String? ?? contactPhone,
     );
   }
 }
