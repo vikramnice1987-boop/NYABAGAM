@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/ai/ai_gateway.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_spacing.dart';
@@ -16,13 +18,17 @@ class CapturePage extends StatefulWidget {
 class _CapturePageState extends State<CapturePage> with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   final _textController = TextEditingController();
+  final _picker = ImagePicker();
+
   bool _isRecording = false;
   bool _isUnderstanding = false;
+  String? _attachedFileName;
+  Uint8List? _attachedFileBytes;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -32,29 +38,92 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
     super.dispose();
   }
 
+  Future<void> _pickFromCamera() async {
+    try {
+      final XFile? photo = await _picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      if (photo != null) {
+        final bytes = await photo.readAsBytes();
+        setState(() {
+          _attachedFileName = photo.name;
+          _attachedFileBytes = bytes;
+          if (_textController.text.isEmpty) {
+            _textController.text = 'Receipt / Invoice: ${photo.name}';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Camera access error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _attachedFileName = image.name;
+          _attachedFileBytes = bytes;
+          if (_textController.text.isEmpty) {
+            _textController.text = 'Uploaded Document: ${image.name}';
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gallery picker error: $e')),
+        );
+      }
+    }
+  }
+
   void _toggleVoiceRecording() {
     setState(() {
       _isRecording = !_isRecording;
-      if (!_isRecording) {
-        if (_textController.text.isEmpty) {
-          _textController.text = 'Ravi serviced my AC today for ₹800.';
-        }
+      if (!_isRecording && _textController.text.isEmpty) {
+        _textController.text = 'Ravi serviced my AC today for ₹800.';
       }
+    });
+  }
+
+  void _removeAttachment() {
+    setState(() {
+      _attachedFileName = null;
+      _attachedFileBytes = null;
     });
   }
 
   Future<void> _continueWithUnderstanding() async {
     final content = _textController.text.trim();
-    if (content.isEmpty) {
+    if (content.isEmpty && _attachedFileName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please write or record a memory first.')),
+        const SnackBar(content: Text('Please write text, take a photo, or attach a document.')),
       );
       return;
     }
 
+    final promptToUnderstand = content.isNotEmpty
+        ? content
+        : 'Uploaded document: ${_attachedFileName ?? "Document"}';
+
     setState(() => _isUnderstanding = true);
     try {
-      final candidate = await AiGateway.understand(content);
+      final candidate = await AiGateway.understand(promptToUnderstand);
       if (mounted) {
         context.push('/understand', extra: candidate);
       }
@@ -78,8 +147,9 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
-            Tab(icon: Icon(Icons.edit_note), text: 'Write Thought'),
-            Tab(icon: Icon(Icons.mic), text: 'Voice Note'),
+            Tab(icon: Icon(Icons.edit_note), text: 'Text'),
+            Tab(icon: Icon(Icons.camera_alt_outlined), text: 'Camera / Scan'),
+            Tab(icon: Icon(Icons.mic), text: 'Voice'),
           ],
         ),
       ),
@@ -91,7 +161,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
               child: TabBarView(
                 controller: _tabController,
                 children: [
-                  // Text Capture Tab
+                  // Tab 1: Text Capture
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -101,7 +171,7 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        'Your words become a reviewable candidate. Nothing is saved until you confirm.',
+                        'Your input becomes a structured candidate. Nothing is saved until you review and confirm.',
                       ),
                       const SizedBox(height: NySpacing.space16),
                       Expanded(
@@ -113,14 +183,122 @@ class _CapturePageState extends State<CapturePage> with SingleTickerProviderStat
                           minLines: null,
                           textAlignVertical: TextAlignVertical.top,
                           decoration: const InputDecoration(
-                            hintText: 'e.g., Ravi serviced my AC today for ₹800.',
+                            hintText: 'e.g., Ravi serviced my AC today for ₹800.\nor Paste warranty details, doctor prescription, etc.',
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  // Voice Capture Tab
+                  // Tab 2: Camera & File Upload
+                  SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Attach Invoices, Bills & Photos',
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Capture service bills, appliance model labels, warranties, or receipts directly.',
+                          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(180)),
+                        ),
+                        const SizedBox(height: NySpacing.space20),
+
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.photo_camera),
+                                label: const Text('Take Photo'),
+                                onPressed: _pickFromCamera,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                icon: const Icon(Icons.photo_library_outlined),
+                                label: const Text('Upload File'),
+                                onPressed: _pickFromGallery,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: NySpacing.space20),
+
+                        if (_attachedFileName != null) ...[
+                          NyCard(
+                            backgroundColor: theme.colorScheme.primaryContainer.withAlpha(80),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.image,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            _attachedFileName!,
+                                            style: const TextStyle(fontWeight: FontWeight.w700),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const Text(
+                                            'Attached & Ready to Analyze',
+                                            style: TextStyle(fontSize: 12, color: NyColors.statusSuccess),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close),
+                                      onPressed: _removeAttachment,
+                                      tooltip: 'Remove',
+                                    ),
+                                  ],
+                                ),
+                                if (_attachedFileBytes != null) ...[
+                                  const SizedBox(height: 12),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.memory(
+                                      _attachedFileBytes!,
+                                      height: 140,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: NySpacing.space16),
+                        ],
+
+                        Text(
+                          'Add Notes / Description (Optional):',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: theme.colorScheme.secondary),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: _textController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            hintText: 'e.g., CoolCare AC service bill received from Ravi.',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Tab 3: Voice Note
                   Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
