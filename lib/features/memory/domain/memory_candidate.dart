@@ -47,6 +47,9 @@ class MemoryCandidate {
     this.attachmentName,
     this.attachmentType,
     this.contactPhone,
+    this.warrantyExpiresAt,
+    this.serviceDueAt,
+    this.machineType,
     this.status = MemoryStatus.candidate,
   });
 
@@ -55,6 +58,9 @@ class MemoryCandidate {
     String? attachmentName,
     String? attachmentType,
     String? contactPhone,
+    DateTime? warrantyExpiresAt,
+    DateTime? serviceDueAt,
+    String? machineType,
   }) {
     final normalized = content.trim();
     final summary = normalized.length > 160
@@ -72,6 +78,9 @@ class MemoryCandidate {
       attachmentName: attachmentName,
       attachmentType: attachmentType,
       contactPhone: contactPhone,
+      warrantyExpiresAt: warrantyExpiresAt,
+      serviceDueAt: serviceDueAt,
+      machineType: machineType,
     );
   }
 
@@ -94,6 +103,9 @@ class MemoryCandidate {
   final String? attachmentName;
   final String? attachmentType;
   final String? contactPhone;
+  final DateTime? warrantyExpiresAt;
+  final DateTime? serviceDueAt;
+  final String? machineType;
   final MemoryStatus status;
 
   MemoryCandidate copyWith({
@@ -112,6 +124,9 @@ class MemoryCandidate {
     String? attachmentName,
     String? attachmentType,
     String? contactPhone,
+    DateTime? warrantyExpiresAt,
+    DateTime? serviceDueAt,
+    String? machineType,
     MemoryStatus? status,
   }) => MemoryCandidate(
     id: id,
@@ -133,6 +148,9 @@ class MemoryCandidate {
     attachmentName: attachmentName ?? this.attachmentName,
     attachmentType: attachmentType ?? this.attachmentType,
     contactPhone: contactPhone ?? this.contactPhone,
+    warrantyExpiresAt: warrantyExpiresAt ?? this.warrantyExpiresAt,
+    serviceDueAt: serviceDueAt ?? this.serviceDueAt,
+    machineType: machineType ?? this.machineType,
     status: status ?? this.status,
   );
 
@@ -153,6 +171,16 @@ class MemoryCandidate {
       parsedOccurredAt = DateTime.tryParse(data['occurred_at'].toString());
     }
 
+    DateTime? parsedWarrantyExpiresAt;
+    if (data['warranty_expires_at'] != null) {
+      parsedWarrantyExpiresAt = DateTime.tryParse(data['warranty_expires_at'].toString());
+    }
+
+    DateTime? parsedServiceDueAt;
+    if (data['service_due_at'] != null) {
+      parsedServiceDueAt = DateTime.tryParse(data['service_due_at'].toString());
+    }
+
     return copyWith(
       title: data['title'] as String? ?? title,
       summary: data['summary'] as String? ?? summary,
@@ -166,6 +194,9 @@ class MemoryCandidate {
       currency: data['currency'] as String? ?? currency,
       occurredAt: parsedOccurredAt,
       contactPhone: data['contact_phone'] as String? ?? contactPhone,
+      warrantyExpiresAt: parsedWarrantyExpiresAt ?? warrantyExpiresAt,
+      serviceDueAt: parsedServiceDueAt ?? serviceDueAt,
+      machineType: data['machine_type'] as String? ?? machineType,
     );
   }
 }

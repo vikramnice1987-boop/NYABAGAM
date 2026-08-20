@@ -82,8 +82,7 @@ abstract final class AiGateway {
     }
   }
 
-  // --- Multi-Language & Multi-Entity Offline Understanding Engine ---
-    static String _cleanText(String input) {
+  static String _cleanText(String input) {
     final words = input.split(RegExp(r'\s+'));
     final unique = <String>[];
     for (final w in words) {
@@ -106,23 +105,27 @@ abstract final class AiGateway {
     final events = <String>{};
     double? amount;
     String? detectedPhone;
+    DateTime? warrantyExpiresAt;
+    DateTime? serviceDueAt;
+    String? machineType;
     final relationships = <DetectedRelationship>[];
+    final now = DateTime.now();
 
-    // 1. Phone / WhatsApp Number Extraction (e.g. +91 9876543210, 9876543210)
+    // 1. Phone / WhatsApp Number Extraction
     final phoneRegex = RegExp(r'(?:\+?91[\-\s]?)?[6-9]\d{9}\b');
     final phoneMatch = phoneRegex.firstMatch(content);
     if (phoneMatch != null) {
       detectedPhone = phoneMatch.group(0)?.replaceAll(RegExp(r'[\-\s]'), '');
     }
 
-    // 2. Amount Extraction (â‚¹, $, Rs, INR, à®°à¯‚à®ªà®¾à®¯à¯)
-    final amtRegex = RegExp(r'(?:[â‚¹$â‚¬Â£]|rs\.?|inr|à®°à¯‚à®ªà®¾à®¯à¯|à®°à¯‚\.?)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
+    // 2. Cost / Amount Extraction
+    final amtRegex = RegExp(r'(?:[ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¹$ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£]|rs\.?|inr|rupees)\s*([\d,]+(?:\.\d+)?)', caseSensitive: false);
     final amtMatch = amtRegex.firstMatch(content);
     if (amtMatch != null) {
       final rawNum = amtMatch.group(1)?.replaceAll(',', '');
       if (rawNum != null) amount = double.tryParse(rawNum);
     } else {
-      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth|à®šà¯†à®²à®µà¯|à®•à¯Šà®Ÿà¯à®¤à¯à®¤à¯‡à®©à¯)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
+      final plainNumRegex = RegExp(r'\b(?:for|paid|cost|price|fee|worth)\s*(?:of)?\s*([\d,]+(?:\.\d+)?)\b', caseSensitive: false);
       final plainMatch = plainNumRegex.firstMatch(content);
       if (plainMatch != null) {
         final rawNum = plainMatch.group(1)?.replaceAll(',', '');
@@ -130,40 +133,86 @@ abstract final class AiGateway {
       }
     }
 
-    // 3. Multi-language Things / Appliances / Items (English & Tamil)
+    // 3. Multi-language Things / Machines / Appliances (Order by length descending)
     final knownThings = {
-      'ac': 'AC', 'air conditioner': 'Air Conditioner', 'à®à®šà®¿': 'AC',
-      'car': 'Car', 'à®•à®¾à®°à¯': 'Car',
-      'bike': 'Bike', 'à®ªà¯ˆà®•à¯': 'Bike', 'à®µà®£à¯à®Ÿà®¿': 'Two Wheeler',
-      'laptop': 'Laptop', 'à®²à¯‡à®ªà¯à®Ÿà®¾à®ªà¯': 'Laptop',
-      'phone': 'Phone', 'à®ªà¯‹à®©à¯': 'Phone', 'à®®à¯Šà®ªà¯ˆà®²à¯': 'Mobile Phone',
-      'fridge': 'Refrigerator', 'refrigerator': 'Refrigerator', 'à®ªà®¿à®°à®¿à®Ÿà¯à®œà¯': 'Refrigerator',
-      'tv': 'Television', 'television': 'Television', 'à®Ÿà®¿à®µà®¿': 'Television',
-      'washing machine': 'Washing Machine', 'à®µà®¾à®·à®¿à®™à¯ à®®à¯†à®·à®¿à®©à¯': 'Washing Machine',
-      'geyser': 'Geyser', 'à®•à¯€à®šà®°à¯': 'Geyser',
-      'inverter': 'Inverter', 'à®‡à®©à¯à®µà¯†à®°à¯à®Ÿà¯à®Ÿà®°à¯': 'Inverter',
-      'motor': 'Water Motor', 'à®®à¯‹à®Ÿà¯à®Ÿà®¾à®°à¯': 'Water Motor',
-      'water purifier': 'Water Purifier', 'ro': 'RO Purifier',
-      'fan': 'Ceiling Fan', 'à®ƒà®ªà¯‡à®©à¯': 'Fan',
+      'washing machine': 'Washing Machine',
+      'air conditioner': 'AC',
+      'water purifier': 'Water Purifier',
+      'ro water purifier': 'Water Purifier',
+      'microwave oven': 'Microwave Oven',
+      'refrigerator': 'Refrigerator',
+      'motorcycle': 'Bike',
+      'television': 'Television',
+      'water heater': 'Geyser',
+      'computer': 'Computer',
+      'inverter': 'Inverter',
+      'scooter': 'Scooter',
+      'battery': 'Battery',
+      'microwave': 'Microwave Oven',
+      'laptop': 'Laptop',
+      'fridge': 'Refrigerator',
+      'geyser': 'Geyser',
+      'motor': 'Water Motor',
+      'phone': 'Phone',
+      'bike': 'Bike',
+      'car': 'Car',
+      'fan': 'Ceiling Fan',
+      'ro': 'Water Purifier',
+      'tv': 'Television',
+      'ac': 'AC',
     };
     for (final entry in knownThings.entries) {
-      if (lower.contains(entry.key)) things.add(entry.value);
+      final key = entry.key;
+      final matched = key.length <= 3
+          ? RegExp('\b${RegExp.escape(key)}\b').hasMatch(lower)
+          : lower.contains(key);
+      if (matched) {
+        things.add(entry.value);
+        machineType ??= entry.value;
+      }
     }
 
-    // 4. Multi-language Organizations & Stores
+    // 4. Warranty Period / Expiry Date Detection
+    if (lower.contains('2 year warranty') || lower.contains('2 years warranty') || lower.contains('2 yr warranty')) {
+      warrantyExpiresAt = now.add(const Duration(days: 730));
+    } else if (lower.contains('1 year warranty') || lower.contains('1 yr warranty') || lower.contains('12 months warranty') || lower.contains('1 year guarantee')) {
+      warrantyExpiresAt = now.add(const Duration(days: 365));
+    } else if (lower.contains('6 month warranty') || lower.contains('6 months warranty') || lower.contains('6 mo warranty') || lower.contains('6 month guarantee')) {
+      warrantyExpiresAt = now.add(const Duration(days: 180));
+    } else if (lower.contains('3 month warranty') || lower.contains('3 months warranty') || lower.contains('3 mo warranty')) {
+      warrantyExpiresAt = now.add(const Duration(days: 90));
+    } else if (lower.contains('1 month warranty') || lower.contains('1 mo warranty')) {
+      warrantyExpiresAt = now.add(const Duration(days: 30));
+    } else if (lower.contains('2 days warranty') || lower.contains('expire in 2 days') || lower.contains('expires in 2 days')) {
+      warrantyExpiresAt = now.add(const Duration(days: 2));
+    }
+
+    // 5. Next Service Due Date Detection
+    if (lower.contains('next service in 6 months') || lower.contains('service due in 6 months')) {
+      serviceDueAt = now.add(const Duration(days: 180));
+    } else if (lower.contains('next service in 3 months') || lower.contains('service due in 3 months')) {
+      serviceDueAt = now.add(const Duration(days: 90));
+    } else if (lower.contains('next service in 1 year') || lower.contains('service due in 1 year')) {
+      serviceDueAt = now.add(const Duration(days: 365));
+    } else if (lower.contains('next service in 2 days') || lower.contains('service due in 2 days')) {
+      serviceDueAt = now.add(const Duration(days: 2));
+    }
+
+    // 6. Multi-language Organizations & Brands
     final knownOrgs = {
-      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'à®šà®¾à®®à¯à®šà®™à¯': 'Samsung',
-      'lg': 'LG', 'à®Žà®²à¯à®œà®¿': 'LG', 'sony': 'Sony', 'à®šà¯‹à®©à®¿': 'Sony',
-      'apple': 'Apple', 'amazon': 'Amazon', 'flipkart': 'Flipkart',
-      'honda': 'Honda', 'à®¹à¯‹à®£à¯à®Ÿà®¾': 'Honda', 'tata': 'Tata', 'à®Ÿà®¾à®Ÿà®¾': 'Tata',
-      'apollo': 'Apollo Clinic', 'à®…à®ªà¯à®ªà¯‹à®²à¯‹': 'Apollo',
-      'urban company': 'Urban Company', 'croma': 'Croma',
+      'coolcare': 'CoolCare', 'samsung': 'Samsung', 'lg': 'LG',
+      'sony': 'Sony', 'apple': 'Apple', 'amazon': 'Amazon',
+      'flipkart': 'Flipkart', 'honda': 'Honda', 'tata': 'Tata',
+      'apollo': 'Apollo Clinic', 'urban company': 'Urban Company',
+      'croma': 'Croma', 'voltas': 'Voltas', 'whirlpool': 'Whirlpool',
+      'panasonic': 'Panasonic', 'daikin': 'Daikin', 'dell': 'Dell',
+      'hp': 'HP', 'lenovo': 'Lenovo', 'asus': 'Asus',
     };
     for (final entry in knownOrgs.entries) {
       if (lower.contains(entry.key)) orgs.add(entry.value);
     }
 
-    // 5. Extract Names following keywords
+    // 7. Extract Names
     final nameKeywords = {'by', 'to', 'from', 'with', 'doctor', 'dr.', 'dr', 'mr.', 'mr', 'mrs', 'technician', 'mechanic', 'plumber', 'electrician'};
     for (var i = 0; i < words.length; i++) {
       final cleanWord = words[i].replaceAll(RegExp(r'[^\w]'), '').toLowerCase();
@@ -174,23 +223,23 @@ abstract final class AiGateway {
         }
       }
     }
-    // Also check first word if capitalized
+    // Also extract first capitalized word if not a common stop word (e.g. "Ravi serviced my AC")
     if (words.isNotEmpty) {
       final first = words[0].replaceAll(RegExp(r'[^\w]'), '');
       if (first.isNotEmpty && first[0] == first[0].toUpperCase() && first.length > 2 && !knownThings.containsKey(first.toLowerCase())) {
-        final commonStopWords = {'my', 'the', 'yesterday', 'today', 'last', 'i', 'we', 'this', 'our', 'new'};
+        final commonStopWords = {'my', 'the', 'yesterday', 'today', 'last', 'i', 'we', 'this', 'our', 'new', 'who', 'what', 'when'};
         if (!commonStopWords.contains(first.toLowerCase())) {
           people.add(first);
         }
       }
     }
 
-    // 6. Events / Actions (English & Tamil)
-    if (lower.contains('service') || lower.contains('serviced') || lower.contains('à®šà®°à¯à®µà¯€à®¸à¯')) events.add('Service');
-    if (lower.contains('repair') || lower.contains('fixed') || lower.contains('à®°à®¿à®ªà¯à®ªà¯‡à®°à¯') || lower.contains('à®šà®°à®¿à®šà¯†à®¯à¯à®¤à®¾à®°à¯')) events.add('Repair');
-    if (lower.contains('purchase') || lower.contains('bought') || lower.contains('à®µà®¾à®™à¯à®•à®¿à®©à¯‡à®©à¯')) events.add('Purchase');
-    if (lower.contains('doctor') || lower.contains('prescription') || lower.contains('à®®à®°à¯à®¤à¯à®¤à¯à®µà®°à¯') || lower.contains('à®®à®°à¯à®¨à¯à®¤à¯')) events.add('Medical');
-    if (lower.contains('warranty') || lower.contains('à®µà®¾à®°à®£à¯à®Ÿà®¿')) events.add('Warranty');
+    // 8. Events / Actions
+    if (lower.contains('service') || lower.contains('serviced')) events.add('Service');
+    if (lower.contains('repair') || lower.contains('fixed')) events.add('Repair');
+    if (lower.contains('purchase') || lower.contains('bought')) events.add('Purchase');
+    if (lower.contains('doctor') || lower.contains('prescription')) events.add('Medical');
+    if (lower.contains('warranty') || lower.contains('guarantee') || lower.contains('expire')) events.add('Warranty');
 
     // Title formulation
     String title;
@@ -216,6 +265,9 @@ abstract final class AiGateway {
       amount: amount,
       currency: amount != null ? 'INR' : null,
       contactPhone: detectedPhone ?? base.contactPhone,
+      warrantyExpiresAt: warrantyExpiresAt ?? base.warrantyExpiresAt,
+      serviceDueAt: serviceDueAt ?? base.serviceDueAt,
+      machineType: machineType ?? base.machineType,
     );
   }
 

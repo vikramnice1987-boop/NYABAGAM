@@ -71,6 +71,13 @@ class SupabaseMemoryRepository implements MemoryRepository {
             'amount': candidate.amount,
             'currency': candidate.currency,
             'raw_content': candidate.rawContent,
+            'attachment_base64': candidate.attachmentBase64,
+            'attachment_name': candidate.attachmentName,
+            'attachment_type': candidate.attachmentType,
+            'contact_phone': candidate.contactPhone,
+            'warranty_expires_at': candidate.warrantyExpiresAt?.toIso8601String(),
+            'service_due_at': candidate.serviceDueAt?.toIso8601String(),
+            'machine_type': candidate.machineType,
           },
         })
         .select()
@@ -138,6 +145,7 @@ class SupabaseMemoryRepository implements MemoryRepository {
       'people': m.people,
       'things': m.things,
       'organizations': m.organizations,
+      'contact_phone': m.contactPhone,
     }).toList();
 
     return AiGateway.generateContextBridge(statement, evidence);
@@ -177,5 +185,38 @@ class SupabaseMemoryRepository implements MemoryRepository {
         'status': newStatus,
       },
     });
+  }
+
+  @override
+  Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2}) async {
+    final all = await confirmed();
+    final now = DateTime.now();
+    return all.where((m) {
+      if (m.warrantyExpiresAt != null) {
+        final diff = m.warrantyExpiresAt!.difference(now).inDays;
+        if (diff <= daysThreshold) return true;
+      }
+      if (m.serviceDueAt != null) {
+        final diff = m.serviceDueAt!.difference(now).inDays;
+        if (diff <= daysThreshold) return true;
+      }
+      return false;
+    }).toList();
+  }
+
+  @override
+  Future<List<MemoryModel>> getWarrantiesAndReminders() async {
+    final all = await confirmed();
+    final withReminders = all.where((m) =>
+      m.warrantyExpiresAt != null || m.serviceDueAt != null || m.things.isNotEmpty
+    ).toList();
+
+    withReminders.sort((a, b) {
+      final aDate = a.warrantyExpiresAt ?? a.serviceDueAt ?? a.createdAt;
+      final bDate = b.warrantyExpiresAt ?? b.serviceDueAt ?? b.createdAt;
+      return aDate.compareTo(bDate);
+    });
+
+    return withReminders;
   }
 }

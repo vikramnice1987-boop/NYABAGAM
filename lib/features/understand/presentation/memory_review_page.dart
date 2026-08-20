@@ -26,7 +26,14 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
   late List<String> _people;
   late List<String> _things;
   late List<String> _orgs;
+  DateTime? _warrantyExpiresAt;
+  DateTime? _serviceDueAt;
+  String? _machineType;
   bool _isSaving = false;
+
+  final List<String> _machineCategories = [
+    'AC', 'Washing Machine', 'Refrigerator', 'Car', 'Bike', 'Laptop', 'Water Purifier', 'TV', 'Geyser', 'Inverter', 'Other'
+  ];
 
   @override
   void initState() {
@@ -37,6 +44,9 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
     _people = List.from(widget.candidate.people);
     _things = List.from(widget.candidate.things);
     _orgs = List.from(widget.candidate.organizations);
+    _warrantyExpiresAt = widget.candidate.warrantyExpiresAt;
+    _serviceDueAt = widget.candidate.serviceDueAt;
+    _machineType = widget.candidate.machineType ?? (_things.isNotEmpty ? _things.first : null);
   }
 
   @override
@@ -45,6 +55,25 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
     _summaryController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate({required bool isWarranty}) async {
+    final initialDate = (isWarranty ? _warrantyExpiresAt : _serviceDueAt) ?? DateTime.now().add(const Duration(days: 90));
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isWarranty) {
+          _warrantyExpiresAt = picked;
+        } else {
+          _serviceDueAt = picked;
+        }
+      });
+    }
   }
 
   Future<void> _confirm() async {
@@ -56,6 +85,9 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
       people: _people,
       things: _things,
       organizations: _orgs,
+      warrantyExpiresAt: _warrantyExpiresAt,
+      serviceDueAt: _serviceDueAt,
+      machineType: _machineType,
     );
 
     try {
@@ -77,6 +109,8 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final now = DateTime.now();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review Memory Candidate', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -90,7 +124,7 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Review AI-extracted entities, attached photos, and WhatsApp contact details before storing.',
+            'Review AI-extracted entities, warranties, 2-day reminder dates, and WhatsApp contact.',
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
           ),
           const SizedBox(height: NySpacing.space16),
@@ -170,40 +204,6 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
           ),
           const SizedBox(height: NySpacing.space16),
 
-          // Contact Phone / WhatsApp Field
-          NyCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: NyColors.statusSuccess),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'WhatsApp / Contact Number (Optional):',
-                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.phone_rounded, size: 18),
-                    hintText: 'e.g. +91 98400 12345',
-                    border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: NySpacing.space16),
-
           // Detected Entities Section
           Text('Detected Entities & Identity Links', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           const SizedBox(height: 6),
@@ -265,6 +265,223 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
               ],
             ),
           ),
+          const SizedBox(height: NySpacing.space16),
+
+          // Machine Warranty & Lifecycle Reminder Card
+          Text('Machine Warranty & Service Reminders', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+          const SizedBox(height: 6),
+          NyCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.shield_outlined, size: 20, color: NyColors.accentLight),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Warranty & Service Lifecycle (2-Day Alert)',
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'NYABAGAM automatically alerts you 2 days before warranty expires or service is due.',
+                  style: theme.textTheme.bodySmall?.copyWith(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(160)),
+                ),
+                const SizedBox(height: 14),
+
+                // Machine Type Selector
+                const Text('Machine / Appliance Category:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _machineCategories.map((type) {
+                      final isSel = _machineType == type;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: InkWell(
+                          onTap: () => setState(() => _machineType = type),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                              ),
+                            ),
+                            child: Text(
+                              type,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: isSel ? FontWeight.w800 : FontWeight.w500,
+                                color: isSel ? Colors.white : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Warranty Expiry Date
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Warranty Expiry Date:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                    if (_warrantyExpiresAt != null)
+                      TextButton(
+                        onPressed: () => setState(() => _warrantyExpiresAt = null),
+                        child: const Text('Clear', style: TextStyle(fontSize: 11, color: NyColors.statusError)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: () => _pickDate(isWarranty: true),
+                  borderRadius: NyRadius.borderMd,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: NyRadius.borderMd,
+                      border: Border.all(
+                        color: _warrantyExpiresAt != null ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_month_rounded, size: 18, color: NyColors.accentLight),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _warrantyExpiresAt != null
+                                ? '${_warrantyExpiresAt!.year}-${_warrantyExpiresAt!.month.toString().padLeft(2, '0')}-${_warrantyExpiresAt!.day.toString().padLeft(2, '0')} (${_warrantyExpiresAt!.difference(now).inDays} days remaining)'
+                                : 'No warranty date set (Tap to pick date)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: _warrantyExpiresAt != null ? FontWeight.w700 : FontWeight.normal,
+                              color: _warrantyExpiresAt != null ? theme.colorScheme.onSurface : theme.colorScheme.onSurface.withAlpha(140),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    ActionChip(
+                      label: const Text('+6 Months', style: TextStyle(fontSize: 10)),
+                      onPressed: () => setState(() => _warrantyExpiresAt = now.add(const Duration(days: 180))),
+                    ),
+                    ActionChip(
+                      label: const Text('+1 Year', style: TextStyle(fontSize: 10)),
+                      onPressed: () => setState(() => _warrantyExpiresAt = now.add(const Duration(days: 365))),
+                    ),
+                    ActionChip(
+                      label: const Text('+2 Years', style: TextStyle(fontSize: 10)),
+                      onPressed: () => setState(() => _warrantyExpiresAt = now.add(const Duration(days: 730))),
+                    ),
+                    ActionChip(
+                      label: const Text('2 Days (Test Alert)', style: TextStyle(fontSize: 10, color: NyColors.statusWarning)),
+                      onPressed: () => setState(() => _warrantyExpiresAt = now.add(const Duration(days: 2))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Next Service Due Date
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Next Service Due Date:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                    if (_serviceDueAt != null)
+                      TextButton(
+                        onPressed: () => setState(() => _serviceDueAt = null),
+                        child: const Text('Clear', style: TextStyle(fontSize: 11, color: NyColors.statusError)),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                InkWell(
+                  onTap: () => _pickDate(isWarranty: false),
+                  borderRadius: NyRadius.borderMd,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surface,
+                      borderRadius: NyRadius.borderMd,
+                      border: Border.all(
+                        color: _serviceDueAt != null ? NyColors.entityPerson : theme.colorScheme.outline.withAlpha(80),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.build_circle_outlined, size: 18, color: NyColors.entityPerson),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            _serviceDueAt != null
+                                ? '${_serviceDueAt!.year}-${_serviceDueAt!.month.toString().padLeft(2, '0')}-${_serviceDueAt!.day.toString().padLeft(2, '0')} (${_serviceDueAt!.difference(now).inDays} days remaining)'
+                                : 'No service due date set (Tap to pick date)',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: _serviceDueAt != null ? FontWeight.w700 : FontWeight.normal,
+                              color: _serviceDueAt != null ? theme.colorScheme.onSurface : theme.colorScheme.onSurface.withAlpha(140),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: NySpacing.space16),
+
+          // Contact Phone / WhatsApp Field
+          NyCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: NyColors.statusSuccess),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'WhatsApp / Contact Number (Optional):',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.phone_rounded, size: 18),
+                    hintText: 'e.g. +91 98400 12345',
+                    border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: NySpacing.space24),
 
           NyButton(
@@ -279,6 +496,7 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
             variant: NyButtonVariant.outline,
             onPressed: () => context.pop(),
           ),
+          const SizedBox(height: 40),
         ],
       ),
     );

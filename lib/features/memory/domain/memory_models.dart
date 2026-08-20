@@ -17,6 +17,9 @@ class MemoryModel {
     this.attachmentName,
     this.attachmentType,
     this.contactPhone,
+    this.warrantyExpiresAt,
+    this.serviceDueAt,
+    this.machineType,
   });
 
   final String id;
@@ -36,6 +39,43 @@ class MemoryModel {
   final String? attachmentName;
   final String? attachmentType;
   final String? contactPhone;
+  final DateTime? warrantyExpiresAt;
+  final DateTime? serviceDueAt;
+  final String? machineType;
+
+  bool get isWarrantyExpiringSoon {
+    final rem = warrantyDaysRemaining;
+    if (rem == null) return false;
+    return rem >= 0 && rem <= 2;
+  }
+
+  bool get isServiceDueSoon {
+    final rem = serviceDaysRemaining;
+    if (rem == null) return false;
+    return rem >= 0 && rem <= 2;
+  }
+
+  bool get isExpired {
+    final rem = warrantyDaysRemaining;
+    if (rem == null) return false;
+    return rem < 0;
+  }
+
+  int? get warrantyDaysRemaining {
+    if (warrantyExpiresAt == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(warrantyExpiresAt!.year, warrantyExpiresAt!.month, warrantyExpiresAt!.day);
+    return target.difference(today).inDays;
+  }
+
+  int? get serviceDaysRemaining {
+    if (serviceDueAt == null) return null;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final target = DateTime(serviceDueAt!.year, serviceDueAt!.month, serviceDueAt!.day);
+    return target.difference(today).inDays;
+  }
 
   factory MemoryModel.fromRow(Map<String, dynamic> row) {
     final meta = Map<String, dynamic>.from(row['metadata'] as Map? ?? {});
@@ -57,6 +97,9 @@ class MemoryModel {
       attachmentName: meta['attachment_name'] as String?,
       attachmentType: meta['attachment_type'] as String?,
       contactPhone: meta['contact_phone'] as String?,
+      warrantyExpiresAt: meta['warranty_expires_at'] != null ? DateTime.tryParse(meta['warranty_expires_at'] as String) : null,
+      serviceDueAt: meta['service_due_at'] != null ? DateTime.tryParse(meta['service_due_at'] as String) : null,
+      machineType: meta['machine_type'] as String?,
     );
   }
 
@@ -79,6 +122,9 @@ class MemoryModel {
       'attachment_name': attachmentName,
       'attachment_type': attachmentType,
       'contact_phone': contactPhone,
+      'warranty_expires_at': warrantyExpiresAt?.toIso8601String(),
+      'service_due_at': serviceDueAt?.toIso8601String(),
+      'machine_type': machineType,
     },
   };
 

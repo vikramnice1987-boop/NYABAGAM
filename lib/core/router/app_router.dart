@@ -12,6 +12,7 @@ import '../../features/remember/presentation/memory_saved_page.dart';
 import '../../features/context/presentation/context_bridge_page.dart';
 import '../../features/actions/presentation/action_approval_page.dart';
 import '../../features/outcomes/presentation/outcome_record_page.dart';
+import '../../features/reminders/presentation/reminders_page.dart';
 import '../../features/memory/domain/memory_candidate.dart';
 import '../../features/memory/domain/memory_models.dart';
 
@@ -93,6 +94,11 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => MemoryDetailPage(
         memory: state.extra! as MemoryModel,
       ),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/reminders',
+      builder: (context, state) => const RemindersPage(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

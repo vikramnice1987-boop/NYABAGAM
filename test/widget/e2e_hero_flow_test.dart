@@ -36,9 +36,15 @@ void main() {
       // 3. Review Candidate Page
       expect(find.text('Review Memory Candidate'), findsOneWidget);
       expect(find.text('Ravi'), findsOneWidget);
-      expect(find.text('AC'), findsOneWidget);
+      expect(find.text('AC'), findsWidgets);
 
       // Confirm Memory
+      await tester.scrollUntilVisible(
+        find.text('Confirm and Save Memory'),
+        300.0,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Confirm and Save Memory'));
       await tester.pumpAndSettle();
 

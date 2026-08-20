@@ -16,10 +16,10 @@ class MemoryDetailPage extends StatelessWidget {
   final MemoryModel memory;
 
   Future<void> _openWhatsApp(BuildContext context, String phone) async {
-    final cleanPhone = phone.replaceAll(RegExp(r'[^\d]'), '');
+    final cleanPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
     final name = memory.people.isNotEmpty ? memory.people.first : 'there';
-    final thing = memory.things.isNotEmpty ? memory.things.first : 'appliance';
-    final msg = Uri.encodeComponent('Hi $name, regarding my $thing, I wanted to check on it.');
+    final thing = memory.machineType ?? (memory.things.isNotEmpty ? memory.things.first : 'appliance');
+    final msg = Uri.encodeComponent('Hi $name, regarding my $thing service/warranty, I wanted to check on it.');
     final url = Uri.parse('https://wa.me/$cleanPhone?text=$msg');
     try {
       if (await canLaunchUrl(url)) {
@@ -37,6 +37,10 @@ class MemoryDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasWarranty = memory.warrantyExpiresAt != null;
+    final hasService = memory.serviceDueAt != null;
+    final wDays = memory.warrantyDaysRemaining;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Memory Detail', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -54,6 +58,97 @@ class MemoryDetailPage extends StatelessWidget {
             style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
           ),
           const SizedBox(height: NySpacing.space16),
+
+          // Machine Warranty & Lifecycle Status Alert Banner
+          if (hasWarranty || hasService || memory.machineType != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: (wDays != null && wDays <= 2)
+                    ? NyColors.statusError.withAlpha(25)
+                    : theme.colorScheme.surfaceContainerHighest.withAlpha(120),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: (wDays != null && wDays <= 2) ? NyColors.statusError.withAlpha(140) : NyColors.accentLight.withAlpha(80),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.shield_rounded,
+                        size: 20,
+                        color: (wDays != null && wDays <= 2) ? NyColors.statusError : NyColors.accentLight,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '${memory.machineType ?? "Machine"} Lifecycle & Reminders',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: (wDays != null && wDays <= 2) ? NyColors.statusError : NyColors.accentLight,
+                          ),
+                        ),
+                      ),
+                      if (hasWarranty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (wDays != null && wDays <= 2)
+                                ? (wDays < 0 ? NyColors.statusError : NyColors.statusWarning)
+                                : NyColors.statusSuccess,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            wDays != null && wDays <= 2
+                                ? (wDays < 0 ? 'EXPIRED' : 'EXPIRES IN ${wDays}d')
+                                : (wDays != null ? '$wDays days valid' : 'Active'),
+                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      if (hasWarranty) ...[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Warranty Expiration:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                              Text(
+                                '${memory.warrantyExpiresAt!.year}-${memory.warrantyExpiresAt!.month.toString().padLeft(2, '0')}-${memory.warrantyExpiresAt!.day.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (hasService) ...[
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Next Service Due:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                              Text(
+                                '${memory.serviceDueAt!.year}-${memory.serviceDueAt!.month.toString().padLeft(2, '0')}-${memory.serviceDueAt!.day.toString().padLeft(2, '0')}',
+                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: NyColors.entityPerson),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: NySpacing.space16),
+          ],
 
           // Attached Image or Bill Review
           if (memory.attachmentBase64 != null) ...[
@@ -114,7 +209,7 @@ class MemoryDetailPage extends StatelessWidget {
                     children: [
                       const Text('Amount recorded:'),
                       Text(
-                        '₹${memory.amount!.toStringAsFixed(0)} ${memory.currency ?? 'INR'}',
+                        'â‚¹${memory.amount!.toStringAsFixed(0)} ${memory.currency ?? 'INR'}',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ],
@@ -191,6 +286,7 @@ class MemoryDetailPage extends StatelessWidget {
                 extra: 'My ${memory.things.first} isn\'t working.',
               ),
             ),
+          const SizedBox(height: 40),
         ],
       ),
     );

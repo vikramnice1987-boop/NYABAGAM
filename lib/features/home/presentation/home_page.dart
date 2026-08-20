@@ -20,6 +20,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<MemoryModel> _recentMemories = [];
+  List<MemoryModel> _urgentReminders = [];
   bool _isLoading = true;
 
   @override
@@ -30,10 +31,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final memories = await MemoryRepositoryFactory.current.confirmed();
+    final repo = MemoryRepositoryFactory.current;
+    final memories = await repo.confirmed();
+    final urgent = await repo.getExpiringSoon(daysThreshold: 2);
     if (mounted) {
       setState(() {
         _recentMemories = memories;
+        _urgentReminders = urgent;
         _isLoading = false;
       });
     }
@@ -65,6 +69,19 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
+            tooltip: 'Warranties & Reminders',
+            icon: Badge(
+              isLabelVisible: _urgentReminders.isNotEmpty,
+              backgroundColor: NyColors.statusError,
+              label: Text('${_urgentReminders.length}'),
+              child: const Icon(Icons.shield_outlined),
+            ),
+            onPressed: () async {
+              await context.push('/reminders');
+              _loadData();
+            },
+          ),
+          IconButton(
             tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
             icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
             onPressed: () {
@@ -79,6 +96,67 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(NySpacing.space16),
           children: [
+            // Ã°Å¸Å¡Â¨ 2-Day Machine Expiry Warning Banner (Proactive Reminder)
+            if (_urgentReminders.isNotEmpty) ...[
+              InkWell(
+                onTap: () async {
+                  await context.push('/reminders');
+                  _loadData();
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: NyColors.statusError.withAlpha(25),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: NyColors.statusError.withAlpha(160), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: NyColors.statusError.withAlpha(40),
+                        blurRadius: 10,
+                        spreadRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: NyColors.statusError,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.alarm_on_rounded, color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ã¢Å¡Â Ã¯Â¸Â Warranty Expiry Alert (2 Days)',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: NyColors.statusError,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${_urgentReminders.first.machineType ?? _urgentReminders.first.title} warranty expires soon. Tap to view or message technician.',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: NyColors.statusError),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: NySpacing.space16),
+            ],
+
             // Hero Welcome Banner
             Container(
               padding: const EdgeInsets.all(NySpacing.space20),
@@ -99,13 +177,23 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: NyColors.accentLight.withAlpha(30),
-                          borderRadius: BorderRadius.circular(12),
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: NyColors.accentLight.withAlpha(30),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'AI MEMORY & 2-DAY ALERTS',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: NyColors.accentLight,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
                         ),
-                        child: const Text('AI MEMORY LOOP', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: NyColors.accentLight, letterSpacing: 0.5)),
                       ),
                     ],
                   ),
@@ -116,7 +204,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Capture service records, warranties, and contacts in Tamil or English. Connect past facts to present needs.',
+                    'Capture service records, warranties, and contacts. Get proactive 2-day alerts before machine warranties expire.',
                     style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(180)),
                   ),
                   const SizedBox(height: 16),
@@ -133,7 +221,7 @@ class _HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: NySpacing.space20),
 
-            // 3 Quick Action Tiles
+            // 4 Quick Action Tiles (Voice | Photo | Warranties | Ask)
             Row(
               children: [
                 Expanded(
@@ -141,7 +229,7 @@ class _HomePageState extends State<HomePage> {
                     theme: theme,
                     icon: Icons.mic_rounded,
                     title: 'Voice Note',
-                    subtitle: 'தமிழ் / English',
+                    subtitle: 'Multi-Lang',
                     color: NyColors.accentLight,
                     onTap: () async {
                       await context.push('/capture');
@@ -149,13 +237,13 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
                 Expanded(
                   child: _buildQuickTile(
                     theme: theme,
                     icon: Icons.photo_camera_rounded,
-                    title: 'Photo Scan',
-                    subtitle: 'Bills & Labels',
+                    title: 'Scan Bill',
+                    subtitle: 'Invoices',
                     color: NyColors.entityPerson,
                     onTap: () async {
                       await context.push('/capture');
@@ -163,12 +251,26 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _buildQuickTile(
+                    theme: theme,
+                    icon: Icons.shield_outlined,
+                    title: 'Warranties',
+                    subtitle: '2-Day Alert',
+                    color: NyColors.statusSuccess,
+                    onTap: () async {
+                      await context.push('/reminders');
+                      _loadData();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 6),
                 Expanded(
                   child: _buildQuickTile(
                     theme: theme,
                     icon: Icons.search_rounded,
-                    title: 'Ask Memory',
+                    title: 'Ask NY',
                     subtitle: 'Fast Recall',
                     color: NyColors.entityOrg,
                     onTap: () => context.go('/ask'),
@@ -259,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Try capturing "Ravi serviced my AC today for ₹800" or a voice note in தமிழ்.',
+                        'Try capturing "Ravi serviced my AC today for Ã¢â€šÂ¹800, 6 month warranty" or a voice note in Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â.',
                         style: theme.textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
@@ -284,6 +386,29 @@ class _HomePageState extends State<HomePage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
+                          if (mem.warrantyExpiresAt != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              margin: const EdgeInsets.only(left: 6),
+                              decoration: BoxDecoration(
+                                color: (mem.warrantyDaysRemaining != null && mem.warrantyDaysRemaining! <= 2)
+                                    ? NyColors.statusError.withAlpha(30)
+                                    : NyColors.statusSuccess.withAlpha(30),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                mem.warrantyDaysRemaining != null && mem.warrantyDaysRemaining! <= 2
+                                    ? 'Expires in ${mem.warrantyDaysRemaining}d'
+                                    : 'Warranty',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: (mem.warrantyDaysRemaining != null && mem.warrantyDaysRemaining! <= 2)
+                                      ? NyColors.statusError
+                                      : NyColors.statusSuccess,
+                                ),
+                              ),
+                            ),
                           if (mem.attachmentBase64 != null)
                             const Padding(
                               padding: EdgeInsets.only(left: 6),
@@ -336,26 +461,40 @@ class _HomePageState extends State<HomePage> {
       onTap: onTap,
       borderRadius: NyRadius.borderMd,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: NyRadius.borderMd,
           border: Border.all(color: theme.colorScheme.outline.withAlpha(80)),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: color.withAlpha(25),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: 16),
             ),
-            const SizedBox(height: 6),
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11), maxLines: 1),
-            const SizedBox(height: 2),
-            Text(subtitle, style: TextStyle(fontSize: 9, color: theme.colorScheme.onSurface.withAlpha(150)), maxLines: 1),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 10),
+                maxLines: 1,
+              ),
+            ),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                subtitle,
+                style: TextStyle(fontSize: 8, color: theme.colorScheme.onSurface.withAlpha(150)),
+                maxLines: 1,
+              ),
+            ),
           ],
         ),
       ),

@@ -17,6 +17,8 @@ abstract interface class MemoryRepository {
     required String outcomeSummary,
     required String newStatus,
   });
+  Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2});
+  Future<List<MemoryModel>> getWarrantiesAndReminders();
 }
 
 class InMemoryMemoryRepository implements MemoryRepository {
@@ -68,6 +70,9 @@ class InMemoryMemoryRepository implements MemoryRepository {
       attachmentName: candidate.attachmentName,
       attachmentType: candidate.attachmentType,
       contactPhone: candidate.contactPhone,
+      warrantyExpiresAt: candidate.warrantyExpiresAt,
+      serviceDueAt: candidate.serviceDueAt,
+      machineType: candidate.machineType,
     );
 
     _memories.removeWhere((m) => m.id == saved.id);
@@ -141,6 +146,39 @@ class InMemoryMemoryRepository implements MemoryRepository {
     );
     _memories.insert(0, memory);
     await _persist();
+  }
+
+  @override
+  Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2}) async {
+    await _ensureLoaded();
+    final now = DateTime.now();
+    return _memories.where((m) {
+      if (m.warrantyExpiresAt != null) {
+        final diff = m.warrantyExpiresAt!.difference(now).inDays;
+        if (diff <= daysThreshold) return true;
+      }
+      if (m.serviceDueAt != null) {
+        final diff = m.serviceDueAt!.difference(now).inDays;
+        if (diff <= daysThreshold) return true;
+      }
+      return false;
+    }).toList();
+  }
+
+  @override
+  Future<List<MemoryModel>> getWarrantiesAndReminders() async {
+    await _ensureLoaded();
+    final withReminders = _memories.where((m) =>
+      m.warrantyExpiresAt != null || m.serviceDueAt != null || m.things.isNotEmpty
+    ).toList();
+
+    withReminders.sort((a, b) {
+      final aDate = a.warrantyExpiresAt ?? a.serviceDueAt ?? a.createdAt;
+      final bDate = b.warrantyExpiresAt ?? b.serviceDueAt ?? b.createdAt;
+      return aDate.compareTo(bDate);
+    });
+
+    return withReminders;
   }
 }
 
