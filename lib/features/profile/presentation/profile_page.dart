@@ -60,27 +60,38 @@ class ProfilePage extends StatelessWidget {
               builder: (context, _) {
                 final currentMode = ThemeController.instance.themeMode;
                 return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    RadioListTile<ThemeMode>(
-                      title: const Text('Dark Mode (Default)'),
-                      secondary: const Icon(Icons.dark_mode),
-                      value: ThemeMode.dark,
-                      groupValue: currentMode,
-                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
+                    const Text(
+                      'Select App Theme Mode:',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     ),
-                    RadioListTile<ThemeMode>(
-                      title: const Text('Light Mode'),
-                      secondary: const Icon(Icons.light_mode),
-                      value: ThemeMode.light,
-                      groupValue: currentMode,
-                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
-                    ),
-                    RadioListTile<ThemeMode>(
-                      title: const Text('System Default'),
-                      secondary: const Icon(Icons.settings_brightness),
-                      value: ThemeMode.system,
-                      groupValue: currentMode,
-                      onChanged: (mode) => ThemeController.instance.setThemeMode(mode!),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<ThemeMode>(
+                        segments: const [
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.dark,
+                            icon: Icon(Icons.dark_mode_outlined),
+                            label: Text('Dark'),
+                          ),
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.light,
+                            icon: Icon(Icons.light_mode_outlined),
+                            label: Text('Light'),
+                          ),
+                          ButtonSegment<ThemeMode>(
+                            value: ThemeMode.system,
+                            icon: Icon(Icons.settings_brightness_outlined),
+                            label: Text('System'),
+                          ),
+                        ],
+                        selected: {currentMode},
+                        onSelectionChanged: (Set<ThemeMode> newSelection) {
+                          ThemeController.instance.setThemeMode(newSelection.first);
+                        },
+                      ),
                     ),
                   ],
                 );
