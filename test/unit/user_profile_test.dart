@@ -16,7 +16,7 @@ void main() {
         email: 'vikram@example.com',
         city: 'Chennai',
         preferredLanguage: 'ta-IN',
-        avatarEmoji: '⚡',
+        avatarId: 'bolt',
         is2DayAlertsEnabled: true,
         isWhatsAppEnabled: true,
         isOnboardingCompleted: true,
@@ -29,7 +29,7 @@ void main() {
       expect(restored.phone, equals('+91 98400 12345'));
       expect(restored.city, equals('Chennai'));
       expect(restored.preferredLanguage, equals('ta-IN'));
-      expect(restored.avatarEmoji, equals('⚡'));
+      expect(restored.avatarId, equals('bolt'));
       expect(restored.is2DayAlertsEnabled, isTrue);
       expect(restored.isOnboardingCompleted, isTrue);
     });
@@ -43,11 +43,13 @@ void main() {
         phone: '+91 99999 88888',
         city: 'Bangalore',
         preferredLanguage: 'en-IN',
+        avatarId: 'tech',
       );
 
       expect(controller.profile.name, equals('Vikram B'));
       expect(controller.profile.phone, equals('+91 99999 88888'));
       expect(controller.profile.city, equals('Bangalore'));
+      expect(controller.profile.avatarId, equals('tech'));
     });
 
     test('UserProfileController completes onboarding flow', () async {
@@ -59,11 +61,13 @@ void main() {
         phone: '+91 91234 56789',
         city: 'Coimbatore',
         preferredLanguage: 'ta-IN',
+        avatarId: 'star',
       );
 
       expect(controller.isOnboardingCompleted, isTrue);
       expect(controller.profile.name, equals('Alex'));
       expect(controller.profile.preferredLanguage, equals('ta-IN'));
+      expect(controller.profile.avatarId, equals('star'));
     });
 
     test('UserProfileController exports memories as JSON backup', () async {

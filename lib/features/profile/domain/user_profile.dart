@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme/ny_colors.dart';
+
 class UserProfile {
   const UserProfile({
     this.name = 'Vikram',
@@ -5,7 +8,7 @@ class UserProfile {
     this.email = 'vikram@example.com',
     this.city = 'Chennai',
     this.preferredLanguage = 'en-IN',
-    this.avatarEmoji = '👨‍💼',
+    this.avatarId = 'user',
     this.is2DayAlertsEnabled = true,
     this.isWhatsAppEnabled = true,
     this.isOnboardingCompleted = false,
@@ -16,10 +19,46 @@ class UserProfile {
   final String email;
   final String city;
   final String preferredLanguage;
-  final String avatarEmoji;
+  final String avatarId;
   final bool is2DayAlertsEnabled;
   final bool isWhatsAppEnabled;
   final bool isOnboardingCompleted;
+
+  IconData get avatarIcon {
+    switch (avatarId) {
+      case 'tech':
+        return Icons.engineering_rounded;
+      case 'bolt':
+        return Icons.bolt_rounded;
+      case 'star':
+        return Icons.star_rounded;
+      case 'shield':
+        return Icons.shield_rounded;
+      case 'badge':
+        return Icons.workspace_premium_rounded;
+      case 'user':
+      default:
+        return Icons.person_rounded;
+    }
+  }
+
+  Color get avatarColor {
+    switch (avatarId) {
+      case 'tech':
+        return NyColors.entityPerson;
+      case 'bolt':
+        return NyColors.entityThing;
+      case 'star':
+        return NyColors.statusSuccess;
+      case 'shield':
+        return NyColors.statusError;
+      case 'badge':
+        return Colors.purple;
+      case 'user':
+      default:
+        return NyColors.accentLight;
+    }
+  }
 
   UserProfile copyWith({
     String? name,
@@ -27,7 +66,7 @@ class UserProfile {
     String? email,
     String? city,
     String? preferredLanguage,
-    String? avatarEmoji,
+    String? avatarId,
     bool? is2DayAlertsEnabled,
     bool? isWhatsAppEnabled,
     bool? isOnboardingCompleted,
@@ -37,7 +76,7 @@ class UserProfile {
     email: email ?? this.email,
     city: city ?? this.city,
     preferredLanguage: preferredLanguage ?? this.preferredLanguage,
-    avatarEmoji: avatarEmoji ?? this.avatarEmoji,
+    avatarId: avatarId ?? this.avatarId,
     is2DayAlertsEnabled: is2DayAlertsEnabled ?? this.is2DayAlertsEnabled,
     isWhatsAppEnabled: isWhatsAppEnabled ?? this.isWhatsAppEnabled,
     isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
@@ -49,7 +88,7 @@ class UserProfile {
     email: json['email'] as String? ?? 'vikram@example.com',
     city: json['city'] as String? ?? 'Chennai',
     preferredLanguage: json['preferred_language'] as String? ?? 'en-IN',
-    avatarEmoji: json['avatar_emoji'] as String? ?? '👨‍💼',
+    avatarId: json['avatar_id'] as String? ?? 'user',
     is2DayAlertsEnabled: json['is_2day_alerts_enabled'] as bool? ?? true,
     isWhatsAppEnabled: json['is_whatsapp_enabled'] as bool? ?? true,
     isOnboardingCompleted: json['is_onboarding_completed'] as bool? ?? false,
@@ -61,7 +100,7 @@ class UserProfile {
     'email': email,
     'city': city,
     'preferred_language': preferredLanguage,
-    'avatar_emoji': avatarEmoji,
+    'avatar_id': avatarId,
     'is_2day_alerts_enabled': is2DayAlertsEnabled,
     'is_whatsapp_enabled': isWhatsAppEnabled,
     'is_onboarding_completed': isOnboardingCompleted,

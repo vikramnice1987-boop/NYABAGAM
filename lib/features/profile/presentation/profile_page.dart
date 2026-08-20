@@ -8,6 +8,14 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../shared/components/ny_card.dart';
 import '../presentation/user_profile_controller.dart';
 
+class AvatarOption {
+  final String id;
+  final IconData icon;
+  final String label;
+  final Color color;
+  const AvatarOption(this.id, this.icon, this.label, this.color);
+}
+
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -16,8 +24,16 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final List<String> _avatars = ['ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â¨ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¼', 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ËœÃ‚Â©ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¼', 'ÃƒÂ°Ã…Â¸Ã‚Â§Ã¢â‚¬ËœÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â»', 'ÃƒÂ¢Ã…Â¡Ã‚Â¡', 'ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂºÃ‚Â¡ÃƒÂ¯Ã‚Â¸Ã‚Â', 'ÃƒÂ°Ã…Â¸Ã…â€™Ã…Â¸'];
-  final List<Map<String, String>> _languages = [
+  static const List<AvatarOption> _avatars = [
+    AvatarOption('user', Icons.person_rounded, 'User', NyColors.accentLight),
+    AvatarOption('tech', Icons.engineering_rounded, 'Tech', NyColors.entityPerson),
+    AvatarOption('bolt', Icons.bolt_rounded, 'Pro', NyColors.entityThing),
+    AvatarOption('star', Icons.star_rounded, 'Star', NyColors.statusSuccess),
+    AvatarOption('shield', Icons.shield_rounded, 'Shield', NyColors.statusError),
+    AvatarOption('badge', Icons.workspace_premium_rounded, 'Elite', Colors.purple),
+  ];
+
+  final List<Map<String, String>> _languages = const [
     {'code': 'en-IN', 'label': 'English'},
     {'code': 'ta-IN', 'label': 'Tamil'},
     {'code': 'hi-IN', 'label': 'Hindi'},
@@ -119,16 +135,15 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _exportMemories() async {
+    final messenger = ScaffoldMessenger.of(context);
     final jsonString = await UserProfileController.instance.exportMemoriesJson();
     await Clipboard.setData(ClipboardData(text: jsonString));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Memories and profile exported to clipboard as JSON backup!'),
-          backgroundColor: NyColors.statusSuccess,
-        ),
-      );
-    }
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('✓ Memories and profile exported to clipboard as JSON backup!'),
+        backgroundColor: NyColors.statusSuccess,
+      ),
+    );
   }
 
   void _showResetConfirmDialog(BuildContext context) {
@@ -180,15 +195,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   children: [
                     Row(
                       children: [
-                        // Avatar with emoji
+                        // Avatar Icon
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: NyColors.accentLight.withAlpha(30),
+                            color: profile.avatarColor.withAlpha(35),
                             shape: BoxShape.circle,
-                            border: Border.all(color: NyColors.accentLight.withAlpha(100), width: 1.5),
+                            border: Border.all(color: profile.avatarColor.withAlpha(120), width: 2),
                           ),
-                          child: Text(profile.avatarEmoji, style: const TextStyle(fontSize: 32)),
+                          child: Icon(profile.avatarIcon, size: 32, color: profile.avatarColor),
                         ),
                         const SizedBox(width: 14),
                         Expanded(
@@ -221,7 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(180), fontWeight: FontWeight.w600),
                               ),
                               Text(
-                                '${profile.city} ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ ${profile.email}',
+                                '${profile.city} • ${profile.email}',
                                 style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(140)),
                               ),
                             ],
@@ -232,24 +247,27 @@ class _ProfilePageState extends State<ProfilePage> {
                     const SizedBox(height: 12),
 
                     // Avatar Quick Selection Bar
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: _avatars.map((emoji) {
-                        final isSel = profile.avatarEmoji == emoji;
+                    Wrap(
+                      alignment: WrapAlignment.spaceAround,
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _avatars.map((av) {
+                        final isSel = profile.avatarId == av.id;
                         return InkWell(
-                          onTap: () => UserProfileController.instance.updateProfile(avatarEmoji: emoji),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
+                          onTap: () => UserProfileController.instance.updateProfile(avatarId: av.id),
+                          borderRadius: BorderRadius.circular(20),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: isSel ? NyColors.accentLight.withAlpha(40) : Colors.transparent,
+                              color: isSel ? av.color.withAlpha(45) : Colors.transparent,
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: isSel ? NyColors.accentLight : Colors.transparent,
-                                width: 1.5,
+                                color: isSel ? av.color : Colors.transparent,
+                                width: 2,
                               ),
                             ),
-                            child: Text(emoji, style: const TextStyle(fontSize: 18)),
+                            child: Icon(av.icon, size: 20, color: isSel ? av.color : theme.colorScheme.onSurface.withAlpha(150)),
                           ),
                         );
                       }).toList(),
@@ -340,7 +358,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: const Text('2-Day Early Warranty Alerts', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                       subtitle: const Text('Proactively show alerts before machine warranties expire.', style: TextStyle(fontSize: 11)),
                       value: profile.is2DayAlertsEnabled,
-                      activeThumbColor: NyColors.accentLight,
+                      activeTrackColor: NyColors.accentLight,
                       onChanged: (val) => UserProfileController.instance.updateProfile(is2DayAlertsEnabled: val),
                     ),
                     const Divider(),
@@ -350,7 +368,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: const Text('WhatsApp 1-Tap Assistant', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                       subtitle: const Text('Pre-fill technician service chats with historical context.', style: TextStyle(fontSize: 11)),
                       value: profile.isWhatsAppEnabled,
-                      activeThumbColor: NyColors.statusSuccess,
+                      activeTrackColor: NyColors.statusSuccess,
                       onChanged: (val) => UserProfileController.instance.updateProfile(isWhatsAppEnabled: val),
                     ),
                   ],
@@ -457,7 +475,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 6),
                       child: Text(
-                        'NYABAGAM ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¢ Version 1.2.0 (Production Release)',
+                        'NYABAGAM - Version 1.2.0 (Production Release)',
                         style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                       ),
                     ),

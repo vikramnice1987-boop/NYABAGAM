@@ -44,7 +44,7 @@ class UserProfileController extends ChangeNotifier {
     String? email,
     String? city,
     String? preferredLanguage,
-    String? avatarEmoji,
+    String? avatarId,
     bool? is2DayAlertsEnabled,
     bool? isWhatsAppEnabled,
   }) async {
@@ -54,7 +54,7 @@ class UserProfileController extends ChangeNotifier {
       email: email,
       city: city,
       preferredLanguage: preferredLanguage,
-      avatarEmoji: avatarEmoji,
+      avatarId: avatarId,
       is2DayAlertsEnabled: is2DayAlertsEnabled,
       isWhatsAppEnabled: isWhatsAppEnabled,
     );
@@ -66,12 +66,14 @@ class UserProfileController extends ChangeNotifier {
     String? phone,
     String? city,
     String? preferredLanguage,
+    String? avatarId,
   }) async {
     _profile = _profile.copyWith(
       name: name ?? _profile.name,
       phone: phone ?? _profile.phone,
       city: city ?? _profile.city,
       preferredLanguage: preferredLanguage ?? _profile.preferredLanguage,
+      avatarId: avatarId ?? _profile.avatarId,
       isOnboardingCompleted: true,
     );
     await _persist();

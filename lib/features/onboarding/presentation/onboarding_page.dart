@@ -6,6 +6,14 @@ import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../profile/presentation/user_profile_controller.dart';
 
+class AvatarOption {
+  final String id;
+  final IconData icon;
+  final String label;
+  final Color color;
+  const AvatarOption(this.id, this.icon, this.label, this.color);
+}
+
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
 
@@ -21,10 +29,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final _phoneController = TextEditingController(text: '+91 98400 12345');
   final _cityController = TextEditingController(text: 'Chennai');
   String _selectedLanguage = 'en-IN';
-  String _selectedAvatar = 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¼';
+  String _selectedAvatarId = 'user';
 
-  final List<String> _avatars = ['ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€šÃ‚Â¨ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¼', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“Ãƒâ€šÃ‚Â©ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â¼', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€šÃ‚Â§ÃƒÂ¢Ã¢â€šÂ¬Ã‹Å“ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚ÂÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢Ãƒâ€šÃ‚Â»', 'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â¡', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸ÃƒÂ¢Ã¢â€šÂ¬Ã‚ÂºÃƒâ€šÃ‚Â¡ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â', 'ÃƒÆ’Ã‚Â°Ãƒâ€¦Ã‚Â¸Ãƒâ€¦Ã¢â‚¬â„¢Ãƒâ€¦Ã‚Â¸'];
-  final List<Map<String, String>> _languages = [
+  static const List<AvatarOption> _avatars = [
+    AvatarOption('user', Icons.person_rounded, 'User', NyColors.accentLight),
+    AvatarOption('tech', Icons.engineering_rounded, 'Tech', NyColors.entityPerson),
+    AvatarOption('bolt', Icons.bolt_rounded, 'Pro', NyColors.entityThing),
+    AvatarOption('star', Icons.star_rounded, 'Star', NyColors.statusSuccess),
+    AvatarOption('shield', Icons.shield_rounded, 'Shield', NyColors.statusError),
+    AvatarOption('badge', Icons.workspace_premium_rounded, 'Elite', Colors.purple),
+  ];
+
+  final List<Map<String, String>> _languages = const [
     {'code': 'en-IN', 'label': 'English'},
     {'code': 'ta-IN', 'label': 'Tamil'},
     {'code': 'hi-IN', 'label': 'Hindi'},
@@ -59,9 +75,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
       phone: phone,
       city: city,
       preferredLanguage: _selectedLanguage,
-    );
-    await UserProfileController.instance.updateProfile(
-      avatarEmoji: _selectedAvatar,
+      avatarId: _selectedAvatarId,
     );
 
     if (mounted) {
@@ -79,11 +93,12 @@ class _OnboardingPageState extends State<OnboardingPage> {
           children: [
             // Top Skip / Progress Bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
                         padding: const EdgeInsets.all(6),
@@ -264,7 +279,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Simply say "Ravi serviced my AC today for ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¹800 and gave 6-month warranty" or upload a photo of your receipt. AI automatically structures the people, costs, and dates.',
+            'Simply say "Ravi serviced my AC today for ₹800 and gave 6-month warranty" or upload a photo of your receipt. AI automatically structures the people, costs, and dates.',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.4, color: theme.colorScheme.onSurface.withAlpha(180)),
             textAlign: TextAlign.center,
           ),
@@ -344,7 +359,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã‚Â¡Ãƒâ€šÃ‚Â ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â¸Ãƒâ€šÃ‚Â Samsung AC warranty expires in 2 days. 1-tap WhatsApp message to Ravi ready.',
+                    'Alert: Machine warranty expires in 2 days. 1-tap WhatsApp message to technician ready.',
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -373,34 +388,48 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 14),
 
-          // Choose Avatar Emoji
+          // Choose Avatar
           const Text('Choose Your Avatar:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Wrap(
             alignment: WrapAlignment.spaceAround,
-            spacing: 6,
-            runSpacing: 6,
-            children: _avatars.map((emoji) {
-              final isSel = _selectedAvatar == emoji;
+            spacing: 10,
+            runSpacing: 10,
+            children: _avatars.map((av) {
+              final isSel = _selectedAvatarId == av.id;
               return InkWell(
-                onTap: () => setState(() => _selectedAvatar = emoji),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  padding: const EdgeInsets.all(8),
+                onTap: () => setState(() => _selectedAvatarId = av.id),
+                borderRadius: BorderRadius.circular(24),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isSel ? NyColors.accentLight.withAlpha(40) : theme.colorScheme.surface,
+                    color: isSel ? av.color.withAlpha(50) : theme.colorScheme.surface,
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(60),
-                      width: isSel ? 2 : 1,
+                      color: isSel ? av.color : theme.colorScheme.outline.withAlpha(60),
+                      width: isSel ? 2.5 : 1,
                     ),
+                    boxShadow: isSel
+                        ? [
+                            BoxShadow(
+                              color: av.color.withAlpha(60),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
                   ),
-                  child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                  child: Icon(
+                    av.icon,
+                    size: 24,
+                    color: isSel ? av.color : theme.colorScheme.onSurface.withAlpha(180),
+                  ),
                 ),
               );
             }).toList(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           // Name Input
           const Text('Full Name:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
@@ -452,33 +481,33 @@ class _OnboardingPageState extends State<OnboardingPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: _languages.map((lang) {
-              final isSel = _selectedLanguage == lang['code'];
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: InkWell(
-                  onTap: () => setState(() => _selectedLanguage = lang['code']!),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                final isSel = _selectedLanguage == lang['code'];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedLanguage = lang['code']!),
+                    borderRadius: BorderRadius.circular(14),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      lang['label']!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                        color: isSel ? Colors.white : theme.colorScheme.onSurface,
+                      child: Text(
+                        lang['label']!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
+                          color: isSel ? Colors.white : theme.colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
             ),
           ),
         ],
