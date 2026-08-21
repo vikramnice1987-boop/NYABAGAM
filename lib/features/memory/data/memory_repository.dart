@@ -151,18 +151,7 @@ class InMemoryMemoryRepository implements MemoryRepository {
   @override
   Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2}) async {
     await _ensureLoaded();
-    final now = DateTime.now();
-    return _memories.where((m) {
-      if (m.warrantyExpiresAt != null) {
-        final diff = m.warrantyExpiresAt!.difference(now).inDays;
-        if (diff <= daysThreshold) return true;
-      }
-      if (m.serviceDueAt != null) {
-        final diff = m.serviceDueAt!.difference(now).inDays;
-        if (diff <= daysThreshold) return true;
-      }
-      return false;
-    }).toList();
+    return _memories.where((m) => m.isWarrantyExpiringSoon || m.isServiceDueSoon).toList();
   }
 
   @override

@@ -190,18 +190,7 @@ class SupabaseMemoryRepository implements MemoryRepository {
   @override
   Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2}) async {
     final all = await confirmed();
-    final now = DateTime.now();
-    return all.where((m) {
-      if (m.warrantyExpiresAt != null) {
-        final diff = m.warrantyExpiresAt!.difference(now).inDays;
-        if (diff <= daysThreshold) return true;
-      }
-      if (m.serviceDueAt != null) {
-        final diff = m.serviceDueAt!.difference(now).inDays;
-        if (diff <= daysThreshold) return true;
-      }
-      return false;
-    }).toList();
+    return all.where((m) => m.isWarrantyExpiringSoon || m.isServiceDueSoon).toList();
   }
 
   @override
