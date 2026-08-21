@@ -57,5 +57,18 @@ void main() {
       final memories = await repo.confirmed();
       expect(memories.any((m) => m.summary.contains('Ravi fixed the AC capacitor')), isTrue);
     });
+
+    test('deletes memory and excludes it from retrieval and search', () async {
+      final candidate = MemoryCandidate.fromText('Temporary memory to delete').withUnderstanding({
+        'title': 'Temp Memory',
+        'summary': 'This will be deleted.',
+      });
+      final saved = await repo.confirm(candidate);
+      expect((await repo.confirmed()).length, equals(1));
+
+      await repo.deleteMemory(saved.id);
+      expect((await repo.confirmed()).isEmpty, isTrue);
+      expect((await repo.search('Temp')).isEmpty, isTrue);
+    });
   });
 }

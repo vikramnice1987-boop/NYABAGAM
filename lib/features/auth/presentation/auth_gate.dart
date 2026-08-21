@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../../../core/supabase/supabase_service.dart';
+import 'auth_controller.dart';
 import 'sign_in_page.dart';
 
 class AuthGate extends StatefulWidget {
@@ -15,26 +11,29 @@ class AuthGate extends StatefulWidget {
 }
 
 class _AuthGateState extends State<AuthGate> {
-  late Session? _session;
-  StreamSubscription<AuthState>? _subscription;
+  final _auth = AuthController.instance;
 
   @override
   void initState() {
     super.initState();
-    final auth = SupabaseService.client.auth;
-    _session = auth.currentSession;
-    _subscription = auth.onAuthStateChange.listen((state) {
-      if (mounted) setState(() => _session = state.session);
-    }, onError: (_, _) {});
+    _auth.addListener(_onAuthChanged);
+  }
+
+  void _onAuthChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
+    _auth.removeListener(_onAuthChanged);
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) =>
-      _session == null ? const SignInPage() : widget.child;
+  Widget build(BuildContext context) {
+    if (_auth.isSupabaseConfigured && !_auth.isAuthenticated) {
+      return const SignInPage();
+    }
+    return widget.child;
+  }
 }

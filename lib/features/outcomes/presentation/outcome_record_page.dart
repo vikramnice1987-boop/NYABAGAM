@@ -42,7 +42,13 @@ class _OutcomeRecordPageState extends State<OutcomeRecordPage> {
           content: Text('Outcome recorded! ${widget.thingName} status updated to resolved.'),
         ),
       );
-      context.go('/');
+      try {
+        context.go('/');
+      } catch (_) {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      }
     }
   }
 

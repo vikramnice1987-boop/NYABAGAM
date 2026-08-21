@@ -199,4 +199,65 @@ class MemoryCandidate {
       machineType: data['machine_type'] as String? ?? machineType,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'source_id': sourceId,
+    'raw_content': rawContent,
+    'title': title,
+    'summary': summary,
+    'captured_at': capturedAt.toIso8601String(),
+    'people': people,
+    'organizations': organizations,
+    'things': things,
+    'places': places,
+    'events': events,
+    'relationships': relationships.map((r) => r.toJson()).toList(),
+    'amount': amount,
+    'currency': currency,
+    'occurred_at': occurredAt?.toIso8601String(),
+    'attachment_base64': attachmentBase64,
+    'attachment_name': attachmentName,
+    'attachment_type': attachmentType,
+    'contact_phone': contactPhone,
+    'warranty_expires_at': warrantyExpiresAt?.toIso8601String(),
+    'service_due_at': serviceDueAt?.toIso8601String(),
+    'machine_type': machineType,
+    'status': status.name,
+  };
+
+  factory MemoryCandidate.fromJson(Map<String, dynamic> json) {
+    final parsedRelationships = (json['relationships'] as List<dynamic>? ?? [])
+        .map((r) => DetectedRelationship.fromJson(Map<String, dynamic>.from(r as Map)))
+        .toList();
+
+    return MemoryCandidate(
+      id: json['id'] as String? ?? '',
+      sourceId: json['source_id'] as String? ?? '',
+      rawContent: json['raw_content'] as String? ?? '',
+      title: json['title'] as String? ?? '',
+      summary: json['summary'] as String? ?? '',
+      capturedAt: DateTime.tryParse(json['captured_at']?.toString() ?? '') ?? DateTime.now(),
+      people: List<String>.from(json['people'] as List? ?? []),
+      organizations: List<String>.from(json['organizations'] as List? ?? []),
+      things: List<String>.from(json['things'] as List? ?? []),
+      places: List<String>.from(json['places'] as List? ?? []),
+      events: List<String>.from(json['events'] as List? ?? []),
+      relationships: parsedRelationships,
+      amount: (json['amount'] is num) ? (json['amount'] as num).toDouble() : null,
+      currency: json['currency'] as String?,
+      occurredAt: json['occurred_at'] != null ? DateTime.tryParse(json['occurred_at'].toString()) : null,
+      attachmentBase64: json['attachment_base64'] as String?,
+      attachmentName: json['attachment_name'] as String?,
+      attachmentType: json['attachment_type'] as String?,
+      contactPhone: json['contact_phone'] as String?,
+      warrantyExpiresAt: json['warranty_expires_at'] != null ? DateTime.tryParse(json['warranty_expires_at'].toString()) : null,
+      serviceDueAt: json['service_due_at'] != null ? DateTime.tryParse(json['service_due_at'].toString()) : null,
+      machineType: json['machine_type'] as String?,
+      status: MemoryStatus.values.firstWhere(
+        (s) => s.name == json['status'],
+        orElse: () => MemoryStatus.candidate,
+      ),
+    );
+  }
 }

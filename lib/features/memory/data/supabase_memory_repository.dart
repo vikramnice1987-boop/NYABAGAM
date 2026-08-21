@@ -208,4 +208,17 @@ class SupabaseMemoryRepository implements MemoryRepository {
 
     return withReminders;
   }
+
+  @override
+  Future<void> deleteMemory(String id) async {
+    final user = _client.auth.currentUser;
+    if (user == null) return;
+
+    // Soft delete memory status
+    await _client
+        .from('memories')
+        .update({'status': 'deleted'})
+        .eq('id', id)
+        .eq('user_id', user.id);
+  }
 }

@@ -21,27 +21,27 @@ class NyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final card = Container(
-      decoration: BoxDecoration(
-        color: backgroundColor ?? theme.cardTheme.color,
-        borderRadius: NyRadius.borderMd,
-        border: Border.all(
-          color: borderColor ?? theme.colorScheme.outline,
-          width: 1,
+    final borderRadius = NyRadius.borderMd;
+    final cardColor = backgroundColor ?? theme.cardTheme.color ?? theme.colorScheme.surface;
+    final bColor = borderColor ?? theme.colorScheme.outline;
+
+    return Material(
+      color: cardColor,
+      borderRadius: borderRadius,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          border: Border.all(color: bColor, width: 1),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: borderRadius,
+          child: Padding(
+            padding: padding,
+            child: child,
+          ),
         ),
       ),
-      padding: padding,
-      child: child,
     );
-
-    if (onTap != null) {
-      return InkWell(
-        onTap: onTap,
-        borderRadius: NyRadius.borderMd,
-        child: card,
-      );
-    }
-
-    return card;
   }
 }

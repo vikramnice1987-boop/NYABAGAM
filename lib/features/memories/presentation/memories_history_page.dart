@@ -63,8 +63,12 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
             return m.people.isNotEmpty;
           case 'Things':
             return m.things.isNotEmpty;
+          case 'Warranties':
+            return m.warrantyExpiresAt != null || m.serviceDueAt != null;
           case 'Services':
-            return m.title.toLowerCase().contains('service') || m.summary.toLowerCase().contains('service');
+            return m.title.toLowerCase().contains('service') ||
+                m.summary.toLowerCase().contains('service') ||
+                m.title.toLowerCase().contains('repair');
           default:
             return true;
         }
@@ -77,7 +81,7 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memories & History'),
+        title: const Text('Memories & History', style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: Column(
         children: [
@@ -105,7 +109,7 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: NySpacing.space4),
             child: Row(
-              children: ['All', 'People', 'Things', 'Services'].map((filter) {
+              children: ['All', 'People', 'Things', 'Warranties', 'Services'].map((filter) {
                 final isSelected = _selectedFilter == filter;
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
@@ -144,7 +148,10 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
                           itemBuilder: (context, index) {
                             final mem = _filteredMemories[index];
                             return NyCard(
-                              onTap: () => context.push('/memory-detail', extra: mem),
+                              onTap: () async {
+                                await context.push('/memory-detail', extra: mem);
+                                _loadMemories();
+                              },
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -159,7 +166,7 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
                                       ),
                                       if (mem.amount != null)
                                         Text(
-                                          '?${mem.amount!.toStringAsFixed(0)}',
+                                          'Rs. ${mem.amount!.toStringAsFixed(0)}',
                                           style: TextStyle(
                                             fontWeight: FontWeight.w700,
                                             color: theme.colorScheme.secondary,
@@ -177,6 +184,11 @@ class _MemoriesHistoryPageState extends State<MemoriesHistoryPage> {
                                       for (final p in mem.people) NyEntityChip(label: p, type: NyEntityType.person),
                                       for (final t in mem.things) NyEntityChip(label: t, type: NyEntityType.thing),
                                       for (final o in mem.organizations) NyEntityChip(label: o, type: NyEntityType.organization),
+                                      if (mem.warrantyExpiresAt != null)
+                                        NyEntityChip(
+                                          label: 'Warranty: ${mem.warrantyExpiresAt!.year}-${mem.warrantyExpiresAt!.month.toString().padLeft(2, '0')}-${mem.warrantyExpiresAt!.day.toString().padLeft(2, '0')}',
+                                          type: NyEntityType.place,
+                                        ),
                                     ],
                                   ),
                                 ],

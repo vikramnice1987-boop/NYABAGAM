@@ -14,6 +14,7 @@ import '../../features/actions/presentation/action_approval_page.dart';
 import '../../features/outcomes/presentation/outcome_record_page.dart';
 import '../../features/reminders/presentation/reminders_page.dart';
 import '../../features/onboarding/presentation/onboarding_page.dart';
+import '../../features/auth/presentation/sign_in_page.dart';
 import '../../features/memory/domain/memory_candidate.dart';
 import '../../features/memory/domain/memory_models.dart';
 
@@ -48,6 +49,10 @@ final GoRouter appRouter = GoRouter(
               path: '/history',
               builder: (context, state) => const MemoriesHistoryPage(),
             ),
+            GoRoute(
+              path: '/memories',
+              builder: (context, state) => const MemoriesHistoryPage(),
+            ),
           ],
         ),
         StatefulShellBranch(
@@ -74,6 +79,11 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/onboarding',
       builder: (context, state) => const OnboardingPage(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/sign-in',
+      builder: (context, state) => const SignInPage(),
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

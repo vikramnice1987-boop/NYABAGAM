@@ -233,10 +233,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               const SizedBox(height: 2),
                               Text(
                                 profile.phone,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(180), fontWeight: FontWeight.w600),
                               ),
                               Text(
                                 '${profile.city} | ${profile.email}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(140)),
                               ),
                             ],
@@ -298,7 +302,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: const [
                         Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
                         SizedBox(width: 8),
-                        Text('Default Speech Language', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                        Expanded(
+                          child: Text(
+                            'Default Speech Language',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -394,28 +403,38 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: 10),
                         SizedBox(
                           width: double.infinity,
-                          child: SegmentedButton<ThemeMode>(
-                            segments: const [
-                              ButtonSegment<ThemeMode>(
-                                value: ThemeMode.dark,
-                                icon: Icon(Icons.dark_mode_outlined),
-                                label: Text('Dark'),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.center,
+                            child: SegmentedButton<ThemeMode>(
+                              showSelectedIcon: false,
+                              style: ButtonStyle(
+                                visualDensity: VisualDensity.compact,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 10, vertical: 0)),
                               ),
-                              ButtonSegment<ThemeMode>(
-                                value: ThemeMode.light,
-                                icon: Icon(Icons.light_mode_outlined),
-                                label: Text('Light'),
-                              ),
-                              ButtonSegment<ThemeMode>(
-                                value: ThemeMode.system,
-                                icon: Icon(Icons.settings_brightness_outlined),
-                                label: Text('System'),
-                              ),
-                            ],
-                            selected: {currentMode},
-                            onSelectionChanged: (Set<ThemeMode> newSelection) {
-                              ThemeController.instance.setThemeMode(newSelection.first);
-                            },
+                              segments: const [
+                                ButtonSegment<ThemeMode>(
+                                  value: ThemeMode.dark,
+                                  icon: Icon(Icons.dark_mode_outlined, size: 16),
+                                  label: Text('Dark', style: TextStyle(fontSize: 12)),
+                                ),
+                                ButtonSegment<ThemeMode>(
+                                  value: ThemeMode.light,
+                                  icon: Icon(Icons.light_mode_outlined, size: 16),
+                                  label: Text('Light', style: TextStyle(fontSize: 12)),
+                                ),
+                                ButtonSegment<ThemeMode>(
+                                  value: ThemeMode.system,
+                                  icon: Icon(Icons.settings_brightness_outlined, size: 16),
+                                  label: Text('System', style: TextStyle(fontSize: 12)),
+                                ),
+                              ],
+                              selected: {currentMode},
+                              onSelectionChanged: (Set<ThemeMode> newSelection) {
+                                ThemeController.instance.setThemeMode(newSelection.first);
+                              },
+                            ),
                           ),
                         ),
                       ],

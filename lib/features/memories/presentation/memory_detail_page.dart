@@ -8,6 +8,7 @@ import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
 import '../../../shared/components/ny_evidence_card.dart';
+import '../../memory/data/memory_repository.dart';
 import '../../memory/domain/memory_models.dart';
 
 class MemoryDetailPage extends StatelessWidget {
@@ -277,7 +278,7 @@ class MemoryDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: NySpacing.space24),
 
-          if (memory.things.isNotEmpty)
+          if (memory.things.isNotEmpty) ...[
             NyButton(
               label: 'Check Context Bridge for ${memory.things.first}',
               icon: Icons.lightbulb_outline_rounded,
@@ -286,6 +287,46 @@ class MemoryDetailPage extends StatelessWidget {
                 extra: 'My ${memory.things.first} isn\'t working.',
               ),
             ),
+            const SizedBox(height: 12),
+          ],
+
+          NyButton(
+            label: 'Forget this Memory',
+            icon: Icons.delete_outline_rounded,
+            variant: NyButtonVariant.destructive,
+            onPressed: () async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Forget this Memory?'),
+                  content: const Text(
+                    'This memory and its entities will be removed from your personal memory graph and search index.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      style: FilledButton.styleFrom(backgroundColor: NyColors.statusError),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (confirm == true && context.mounted) {
+                await MemoryRepositoryFactory.current.deleteMemory(memory.id);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Memory forgotten and removed.')),
+                  );
+                  context.pop();
+                }
+              }
+            },
+          ),
           const SizedBox(height: 40),
         ],
       ),

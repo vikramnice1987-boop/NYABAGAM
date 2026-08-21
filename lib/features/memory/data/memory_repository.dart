@@ -19,6 +19,7 @@ abstract interface class MemoryRepository {
   });
   Future<List<MemoryModel>> getExpiringSoon({int daysThreshold = 2});
   Future<List<MemoryModel>> getWarrantiesAndReminders();
+  Future<void> deleteMemory(String id);
 }
 
 class InMemoryMemoryRepository implements MemoryRepository {
@@ -48,6 +49,13 @@ class InMemoryMemoryRepository implements MemoryRepository {
       final list = _memories.map((m) => jsonEncode(m.toJson())).toList();
       await prefs.setStringList(_storageKey, list);
     } catch (_) {}
+  }
+
+  @override
+  Future<void> deleteMemory(String id) async {
+    await _ensureLoaded();
+    _memories.removeWhere((m) => m.id == id);
+    await _persist();
   }
 
   @override
