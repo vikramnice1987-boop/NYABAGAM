@@ -209,7 +209,7 @@ class MemoryDetailPage extends StatelessWidget {
                     children: [
                       const Text('Amount recorded:'),
                       Text(
-                        'â‚¹${memory.amount!.toStringAsFixed(0)} ${memory.currency ?? 'INR'}',
+                        'Rs. ${memory.amount!.toStringAsFixed(0)} ${memory.currency ?? 'INR'}',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ],

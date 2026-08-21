@@ -145,7 +145,7 @@ class _RemindersPageState extends State<RemindersPage> {
                   ),
                   const SizedBox(height: NySpacing.space16),
 
-                  // ðŸš¨ Urgent 2-Day Expiry Alerts Section
+                  // Urgent 2-Day Expiry Alerts Section
                   if (urgent.isNotEmpty) ...[
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -163,7 +163,7 @@ class _RemindersPageState extends State<RemindersPage> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'ðŸš¨ Action Required (${urgent.length} Machine Alert${urgent.length > 1 ? "s" : ""})',
+                                  'Action Required (${urgent.length} Machine Alert${urgent.length > 1 ? "s" : ""})',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w800,
                                     fontSize: 14,

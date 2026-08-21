@@ -140,7 +140,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await Clipboard.setData(ClipboardData(text: jsonString));
     messenger.showSnackBar(
       const SnackBar(
-        content: Text('✓ Memories and profile exported to clipboard as JSON backup!'),
+        content: Text('Success: Memories and profile exported to clipboard as JSON backup!'),
         backgroundColor: NyColors.statusSuccess,
       ),
     );
@@ -236,7 +236,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(180), fontWeight: FontWeight.w600),
                               ),
                               Text(
-                                '${profile.city} • ${profile.email}',
+                                '${profile.city} | ${profile.email}',
                                 style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(140)),
                               ),
                             ],

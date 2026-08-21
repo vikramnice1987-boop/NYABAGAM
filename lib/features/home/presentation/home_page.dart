@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.all(NySpacing.space16),
           children: [
-            // Ã°Å¸Å¡Â¨ 2-Day Machine Expiry Warning Banner (Proactive Reminder)
+            // Urgent 2-Day Machine Expiry Warning Banner (Proactive Reminder)
             if (_urgentReminders.isNotEmpty) ...[
               InkWell(
                 onTap: () async {
@@ -134,7 +134,7 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Ã¢Å¡Â Ã¯Â¸Â Warranty Expiry Alert (2 Days)',
+                              'Action Required: Warranty Expiry Alert (2 Days)',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
@@ -361,7 +361,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Try capturing "Ravi serviced my AC today for Ã¢â€šÂ¹800, 6 month warranty" or a voice note in Ã Â®Â¤Ã Â®Â®Ã Â®Â¿Ã Â®Â´Ã Â¯Â.',
+                        'Try capturing "Ravi serviced my AC today for Rs. 800, 6 month warranty" or a voice note.',
                         style: theme.textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),

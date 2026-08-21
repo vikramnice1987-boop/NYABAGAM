@@ -256,7 +256,7 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
                     children: [
                       const Text('Recorded Cost:', style: TextStyle(fontWeight: FontWeight.w600)),
                       Text(
-                        '₹${widget.candidate.amount!.toStringAsFixed(0)}',
+                        'Rs. ${widget.candidate.amount!.toStringAsFixed(0)}',
                         style: TextStyle(fontWeight: FontWeight.w700, color: theme.colorScheme.secondary),
                       ),
                     ],

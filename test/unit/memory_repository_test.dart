@@ -11,9 +11,9 @@ void main() {
     });
 
     test('confirms and retrieves memory', () async {
-      final candidate = MemoryCandidate.fromText('Ravi serviced my AC today for ₹800.').withUnderstanding({
+      final candidate = MemoryCandidate.fromText('Ravi serviced my AC today for Rs. 800.').withUnderstanding({
         'title': 'AC Service by Ravi',
-        'summary': 'Ravi serviced the AC for ₹800.',
+        'summary': 'Ravi serviced the AC for Rs. 800.',
         'people': ['Ravi'],
         'things': ['AC'],
         'amount': 800,

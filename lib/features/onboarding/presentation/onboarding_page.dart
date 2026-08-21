@@ -279,7 +279,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Simply say "Ravi serviced my AC today for ₹800 and gave 6-month warranty" or upload a photo of your receipt. AI automatically structures the people, costs, and dates.',
+            'Simply say "Ravi serviced my AC today for Rs. 800 and gave 6-month warranty" or upload a photo of your receipt. AI automatically structures the people, costs, and dates.',
             style: theme.textTheme.bodyMedium?.copyWith(height: 1.4, color: theme.colorScheme.onSurface.withAlpha(180)),
             textAlign: TextAlign.center,
           ),

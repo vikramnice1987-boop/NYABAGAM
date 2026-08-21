@@ -47,7 +47,7 @@ class NyEvidenceCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Evidence Source · $title',
+                  'Evidence Source - $title',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,

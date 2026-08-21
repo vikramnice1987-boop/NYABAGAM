@@ -65,7 +65,7 @@ class _SignInPageState extends State<SignInPage> {
             FilledButton(
               onPressed: _isSubmitting ? null : _sendMagicLink,
               child: Text(
-                _isSubmitting ? 'Sending…' : 'Email me a sign-in link',
+                _isSubmitting ? 'Sending...' : 'Email me a sign-in link',
               ),
             ),
             if (_message != null) ...[
