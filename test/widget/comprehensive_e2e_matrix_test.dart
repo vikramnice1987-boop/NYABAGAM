@@ -36,7 +36,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(theme: AppTheme.light, home: MemoryReviewPage(candidate: candidate)));
       await tester.pumpAndSettle();
 
-      expect(find.text('Review Memory Candidate'), findsOneWidget);
+      expect(find.text('Review candidate'), findsOneWidget);
       expect(find.text('Confirm Structured Details'), findsOneWidget);
 
       await tester.tap(find.text('Confirm and Save Memory'));
@@ -46,7 +46,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(theme: AppTheme.light, home: const MemoriesHistoryPage()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Memories & History'), findsOneWidget);
+      expect(find.text('Memories'), findsOneWidget);
       expect(find.textContaining('Priya'), findsWidgets);
       expect(find.textContaining('Rs.'), findsWidgets);
     });
@@ -75,7 +75,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(theme: AppTheme.light, home: const HomePage()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Action Required: Warranty Expiry Alert (2 Days)'), findsOneWidget);
+      expect(find.text('Warranty expiring in 2 days'), findsOneWidget);
       expect(find.textContaining('Suresh AC Repair Service'), findsWidgets);
 
       // 2. Action Approval Page Gate
@@ -90,7 +90,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(theme: AppTheme.light, home: const ActionApprovalPage(proposal: proposal)));
       await tester.pumpAndSettle();
 
-      expect(find.text('Action Approval'), findsOneWidget);
+      expect(find.text('Action approval'), findsOneWidget);
       expect(find.text('Review Action Before Execution'), findsOneWidget);
       expect(find.textContaining('Suresh'), findsWidgets);
 
@@ -98,7 +98,7 @@ void main() {
       await tester.pumpWidget(MaterialApp(theme: AppTheme.light, home: const OutcomeRecordPage(thingName: 'AC')));
       await tester.pumpAndSettle();
 
-      expect(find.text('Record Outcome'), findsOneWidget);
+      expect(find.text('Record outcome'), findsOneWidget);
       await tester.tap(find.text('Save Outcome & Update Memory'));
       await tester.pump(const Duration(milliseconds: 500));
 

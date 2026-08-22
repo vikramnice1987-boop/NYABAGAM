@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import 'auth_controller.dart';
 
@@ -58,9 +59,8 @@ class _SignInPageState extends State<SignInPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
+    return NyScaffold(
+      body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: NySpacing.space24, vertical: NySpacing.space32),
             child: ConstrainedBox(
@@ -240,7 +240,6 @@ class _SignInPageState extends State<SignInPage> {
               ),
             ),
           ),
-        ),
       ),
     );
   }

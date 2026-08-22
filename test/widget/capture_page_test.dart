@@ -23,10 +23,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Capture Memory'), findsOneWidget);
-      expect(find.text('Text Note'), findsOneWidget);
-      expect(find.text('Voice Note'), findsOneWidget);
-      expect(find.text('Scan / Photo'), findsOneWidget);
+      expect(find.text('Capture memory'), findsOneWidget);
+      expect(find.text('Text'), findsOneWidget);
+      expect(find.text('Voice'), findsOneWidget);
+      expect(find.text('Scan'), findsOneWidget);
       expect(find.text('Review Memory Candidate'), findsOneWidget);
     });
 
@@ -43,10 +43,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Voice Note'));
+      await tester.tap(find.text('Voice'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Speech Language:'), findsOneWidget);
+      expect(find.text('SPEECH LANGUAGE'), findsOneWidget);
       expect(find.text('Tamil'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
     });
@@ -64,11 +64,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Scan / Photo'));
+      await tester.tap(find.text('Scan'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Take Photo'), findsOneWidget);
-      expect(find.text('Upload File'), findsOneWidget);
+      expect(find.text('Take photo'), findsOneWidget);
+      expect(find.text('Upload'), findsOneWidget);
     });
   });
 }

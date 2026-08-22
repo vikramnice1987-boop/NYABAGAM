@@ -1,185 +1,267 @@
 import 'package:flutter/material.dart';
+
 import 'ny_colors.dart';
+import 'ny_motion.dart';
 import 'ny_radius.dart';
 import 'ny_spacing.dart';
+import 'ny_typography.dart';
 
+/// Material bindings for the Liquid Glass system.
+///
+/// Material surfaces are deliberately made transparent here: the visible
+/// chrome comes from `NyGlass` + `NyAuroraBackground`, so anything Material
+/// paints on its own would sit as an opaque slab on top of the wallpaper.
 class AppTheme {
   const AppTheme._();
 
-  static ThemeData get light {
-    final colorScheme = ColorScheme.light(
-      primary: NyColors.primaryLight,
-      onPrimary: Colors.white,
-      primaryContainer: NyColors.primaryLightTint,
-      onPrimaryContainer: NyColors.primaryDark,
-      secondary: NyColors.memoryCyan,
-      onSecondary: Colors.white,
-      tertiary: NyColors.aiPurple,
-      onTertiary: Colors.white,
-      surface: NyColors.surfaceLight,
-      onSurface: NyColors.textPrimaryLight,
-      surfaceContainerHighest: NyColors.surfaceSecondaryLight,
-      outline: NyColors.borderLight,
+  static ThemeData get light => _build(Brightness.light);
+  static ThemeData get dark => _build(Brightness.dark);
+
+  static ThemeData _build(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+
+    final textPrimary = isDark ? NyColors.textPrimaryDark : NyColors.textPrimaryLight;
+    final textSecondary = isDark ? NyColors.textSecondaryDark : NyColors.textSecondaryLight;
+    final accent = isDark ? NyColors.primaryDarkTheme : NyColors.primaryLight;
+    final onAccent = isDark ? const Color(0xFF090B18) : Colors.white;
+
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: accent,
+      onPrimary: onAccent,
+      primaryContainer: isDark ? NyColors.surfaceSecondaryDark : NyColors.primaryLightTint,
+      onPrimaryContainer: isDark ? NyColors.primaryDarkTheme : NyColors.primaryDark,
+      secondary: isDark ? NyColors.memoryCyanDark : NyColors.memoryCyan,
+      onSecondary: isDark ? const Color(0xFF04141A) : Colors.white,
+      tertiary: isDark ? NyColors.aiPurpleDark : NyColors.aiPurple,
+      onTertiary: isDark ? const Color(0xFF130524) : Colors.white,
+      surface: isDark ? NyColors.surfaceDark : NyColors.surfaceLight,
+      onSurface: textPrimary,
+      onSurfaceVariant: textSecondary,
+      surfaceContainerHighest: isDark ? NyColors.surfaceSecondaryDark : NyColors.surfaceSecondaryLight,
+      outline: isDark ? NyColors.borderDark : NyColors.borderLight,
+      outlineVariant: isDark ? NyColors.borderDark : NyColors.borderLight,
       error: NyColors.statusError,
       onError: Colors.white,
     );
 
+    final textTheme = NyTypography.themeFor(textPrimary, textSecondary);
+
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.light,
+      brightness: brightness,
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: NyColors.backgroundLight,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: NyColors.surfaceLight,
-        foregroundColor: NyColors.textPrimaryLight,
+      textTheme: textTheme,
+      fontFamily: NyTypography.fontFamily,
+      fontFamilyFallback: NyTypography.fallback,
+      scaffoldBackgroundColor: isDark
+          ? NyColors.wallpaperBaseDark
+          : NyColors.wallpaperBaseLight,
+      canvasColor: Colors.transparent,
+
+      // The aurora shows through; app bars are drawn by NyScaffold.
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        foregroundColor: textPrimary,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
         centerTitle: false,
+        titleTextStyle: NyTypography.headlineLarge.copyWith(color: textPrimary),
       ),
+
       cardTheme: CardThemeData(
-        color: NyColors.surfaceLight,
+        color: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: NyRadius.borderMd,
-          side: const BorderSide(color: NyColors.borderLight),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderXl),
         margin: EdgeInsets.zero,
       ),
+
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: NyColors.primaryLight,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 48),
-          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          backgroundColor: accent,
+          foregroundColor: onAccent,
+          disabledBackgroundColor: accent.withValues(alpha: 0.28),
+          disabledForegroundColor: onAccent.withValues(alpha: 0.55),
+          minimumSize: const Size(double.infinity, 54),
+          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderLg),
+          textStyle: NyTypography.labelLarge,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: NySpacing.space20),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: NyColors.textPrimaryLight,
-          minimumSize: const Size(double.infinity, 48),
-          side: const BorderSide(color: NyColors.borderLight),
-          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          foregroundColor: textPrimary,
+          minimumSize: const Size(double.infinity, 54),
+          side: BorderSide(
+            color: isDark ? NyColors.glassEdgeTopDark : NyColors.borderLight,
+          ),
+          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderLg),
+          textStyle: NyTypography.labelLarge,
+          padding: const EdgeInsets.symmetric(horizontal: NySpacing.space20),
         ),
       ),
+
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: accent,
+          textStyle: NyTypography.labelLarge,
+        ),
+      ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: NyColors.surfaceLight,
-        contentPadding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: NySpacing.space16),
+        fillColor: isDark
+            ? NyColors.glassFillSunkenDark
+            : NyColors.glassFillSunkenLight,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: NySpacing.space16,
+          vertical: NySpacing.space16,
+        ),
         border: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.borderLight),
+          borderRadius: NyRadius.borderLg,
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.borderLight),
+          borderRadius: NyRadius.borderLg,
+          borderSide: BorderSide(color: colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.primaryLight, width: 1.5),
+          borderRadius: NyRadius.borderLg,
+          borderSide: BorderSide(color: accent, width: 1.5),
         ),
-        hintStyle: const TextStyle(color: NyColors.disabledLight),
+        hintStyle: NyTypography.bodyMedium.copyWith(
+          color: isDark ? NyColors.disabledDark : NyColors.disabledLight,
+        ),
+        labelStyle: NyTypography.labelMedium.copyWith(color: textSecondary),
       ),
+
+      // The real nav bar is the floating glass one in ScaffoldWithNavBar; this
+      // only covers any stray Material NavigationBar.
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: NyColors.surfaceLight,
-        indicatorColor: NyColors.surfaceSecondaryLight,
-        elevation: 2,
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        indicatorColor: accent.withValues(alpha: 0.18),
+        elevation: 0,
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: NyColors.textPrimaryLight);
-          }
-          return const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: NyColors.textSecondaryLight);
+          final selected = states.contains(WidgetState.selected);
+          return NyTypography.labelSmall.copyWith(
+            color: selected ? textPrimary : textSecondary,
+          );
         }),
+      ),
+
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outline,
+        thickness: 1,
+        space: NySpacing.space24,
+      ),
+
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.transparent,
+        side: BorderSide(color: colorScheme.outline),
+        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderPill),
+        labelStyle: NyTypography.labelMedium.copyWith(color: textPrimary),
+        padding: const EdgeInsets.symmetric(
+          horizontal: NySpacing.space12,
+          vertical: NySpacing.space8,
+        ),
+      ),
+
+      switchTheme: SwitchThemeData(
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? Colors.white : textSecondary,
+        ),
+        trackColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected)
+              ? accent
+              : (isDark ? NyColors.glassFillDark : NyColors.surfaceSecondaryLight),
+        ),
+        trackOutlineColor: WidgetStateProperty.all(colorScheme.outline),
+      ),
+
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderSheet),
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: isDark ? NyColors.surfaceDark : NyColors.surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderXl),
+        titleTextStyle: NyTypography.headlineSmall.copyWith(color: textPrimary),
+        contentTextStyle: NyTypography.bodyMedium.copyWith(color: textSecondary),
+      ),
+
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: isDark ? NyColors.surfaceSecondaryDark : NyColors.textPrimaryLight,
+        contentTextStyle: NyTypography.bodyMedium.copyWith(color: Colors.white),
+        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
+        behavior: SnackBarBehavior.floating,
+        insetPadding: const EdgeInsets.all(NySpacing.space16),
+      ),
+
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: accent,
+        linearTrackColor: colorScheme.outline,
+        circularTrackColor: Colors.transparent,
+      ),
+
+      listTileTheme: ListTileThemeData(
+        contentPadding: EdgeInsets.zero,
+        titleTextStyle: NyTypography.titleMedium.copyWith(color: textPrimary),
+        subtitleTextStyle: NyTypography.bodySmall.copyWith(color: textSecondary),
+        iconColor: textSecondary,
+      ),
+
+      iconTheme: IconThemeData(color: textPrimary, size: 22),
+
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: _GlassPageTransition(),
+          TargetPlatform.iOS: _GlassPageTransition(),
+          TargetPlatform.windows: _GlassPageTransition(),
+          TargetPlatform.macOS: _GlassPageTransition(),
+          TargetPlatform.linux: _GlassPageTransition(),
+          TargetPlatform.fuchsia: _GlassPageTransition(),
+        },
       ),
     );
   }
+}
 
-  static ThemeData get dark {
-    final colorScheme = ColorScheme.dark(
-      primary: NyColors.primaryDarkTheme,
-      onPrimary: NyColors.backgroundDark,
-      primaryContainer: NyColors.surfaceSecondaryDark,
-      onPrimaryContainer: NyColors.primaryDarkTheme,
-      secondary: NyColors.memoryCyanDark,
-      onSecondary: Colors.black,
-      tertiary: NyColors.aiPurpleDark,
-      onTertiary: Colors.black,
-      surface: NyColors.surfaceDark,
-      onSurface: NyColors.textPrimaryDark,
-      surfaceContainerHighest: NyColors.surfaceSecondaryDark,
-      outline: NyColors.borderDark,
-      error: NyColors.statusError,
-      onError: Colors.white,
+/// Routes rise and settle rather than sliding flatly.
+class _GlassPageTransition extends PageTransitionsBuilder {
+  const _GlassPageTransition();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final eased = CurvedAnimation(
+      parent: animation,
+      curve: NyMotion.settle,
+      reverseCurve: NyMotion.settle.flipped,
     );
 
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: NyColors.backgroundDark,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: NyColors.surfaceDark,
-        foregroundColor: NyColors.textPrimaryDark,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        centerTitle: false,
-      ),
-      cardTheme: CardThemeData(
-        color: NyColors.surfaceDark,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: NyRadius.borderMd,
-          side: const BorderSide(color: NyColors.borderDark),
-        ),
-        margin: EdgeInsets.zero,
-      ),
-      filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: NyColors.primaryDark,
-          foregroundColor: NyColors.primaryLight,
-          minimumSize: const Size(double.infinity, 48),
-          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: NyColors.textPrimaryDark,
-          minimumSize: const Size(double.infinity, 48),
-          side: const BorderSide(color: NyColors.borderDark),
-          shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: NyColors.surfaceSecondaryDark,
-        contentPadding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: NySpacing.space16),
-        border: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.borderDark),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.borderDark),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: NyRadius.borderMd,
-          borderSide: const BorderSide(color: NyColors.accentDark, width: 1.5),
-        ),
-        hintStyle: const TextStyle(color: NyColors.textTertiaryDark),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: NyColors.surfaceDark,
-        indicatorColor: NyColors.primaryContainerDark,
-        elevation: 2,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: NyColors.primaryDark);
-          }
-          return const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: NyColors.textSecondaryDark);
-        }),
+    return FadeTransition(
+      opacity: eased,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.035),
+          end: Offset.zero,
+        ).animate(eased),
+        child: child,
       ),
     );
   }

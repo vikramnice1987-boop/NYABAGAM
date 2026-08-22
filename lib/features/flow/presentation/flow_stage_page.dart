@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/ny_typography.dart';
+import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_scaffold.dart';
+
 enum MemoryFlowStage {
   capture('Capture', 'Bring in a thought, voice note, photo, or document.'),
   understand('Understand', 'Turn input into a reviewable memory candidate.'),
@@ -18,22 +23,51 @@ enum MemoryFlowStage {
 class FlowStagePage extends StatelessWidget {
   const FlowStagePage({required this.stage, super.key});
   final MemoryFlowStage stage;
+
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(stage.title)),
-    body: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            stage.description,
-            style: Theme.of(context).textTheme.headlineSmall,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return NyScaffold(
+      title: stage.title,
+      eyebrow: 'Memory lifecycle',
+      showBack: true,
+      body: Padding(
+        padding: const EdgeInsets.all(NySpacing.gutter),
+        child: NyReveal(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                stage.description,
+                style: NyTypography.headlineMedium.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: NySpacing.space20),
+              NyCard(
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.construction_rounded,
+                      size: 18,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(width: NySpacing.space10),
+                    Expanded(
+                      child: Text(
+                        'Feature foundation ready for implementation.',
+                        style: NyTypography.bodyMedium.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text('Feature foundation ready for implementation.'),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -26,11 +26,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('NYABAGAM'), findsOneWidget);
-      expect(find.text('Voice Note'), findsOneWidget);
-      expect(find.text('Scan Bill'), findsOneWidget);
-      expect(find.text('Warranties'), findsOneWidget);
-      expect(find.text('Ask NY'), findsOneWidget);
-      expect(find.text('Context Bridge (AI Action Trigger)'), findsOneWidget);
+      expect(find.text('Voice'), findsOneWidget);
+      expect(find.text('Scan'), findsOneWidget);
+      expect(find.text('Warranty'), findsOneWidget);
+      expect(find.text('Ask'), findsOneWidget);
+      expect(find.text('Context Bridge'), findsOneWidget);
     });
 
     testWidgets('renders urgent warranty alert banner when 2-day reminder exists', (tester) async {
@@ -57,8 +57,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Action Required: Warranty Expiry Alert (2 Days)'), findsOneWidget);
-      expect(find.text('Recent Memories'), findsOneWidget);
+      expect(find.text('Warranty expiring in 2 days'), findsOneWidget);
+      expect(find.text('Recent memories'), findsOneWidget);
       expect(find.text('AC Service by Ravi'), findsOneWidget);
     });
   });

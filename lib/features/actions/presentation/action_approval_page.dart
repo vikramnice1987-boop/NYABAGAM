@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../memory/domain/memory_models.dart';
@@ -71,10 +72,9 @@ class _ActionApprovalPageState extends State<ActionApprovalPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Action Approval', style: TextStyle(fontWeight: FontWeight.w700)),
-      ),
+    return NyScaffold(
+      title: 'Action approval',
+      showBack: true,
       body: ListView(
         padding: const EdgeInsets.all(NySpacing.space16),
         children: [

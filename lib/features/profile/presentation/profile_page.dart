@@ -5,7 +5,9 @@ import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
 import '../../../core/theme/theme_controller.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_chip_bar.dart';
 import '../presentation/user_profile_controller.dart';
 
 class AvatarOption {
@@ -116,7 +118,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: NyColors.accentLight, foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(backgroundColor: NyColors.accentGradient[0], foregroundColor: Colors.white),
             onPressed: () async {
               await UserProfileController.instance.updateProfile(
                 name: nameCtrl.text.trim(),
@@ -177,10 +179,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile & Settings', style: TextStyle(fontWeight: FontWeight.w800)),
-      ),
+    return NyScaffold(
+      title: 'Profile',
+      padBottomForNav: true,
       body: ListenableBuilder(
         listenable: UserProfileController.instance,
         builder: (context, _) {
@@ -322,29 +323,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         children: _languages.map((lang) {
                           final isSel = profile.preferredLanguage == lang['code'];
                           return Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: InkWell(
-                              onTap: () => UserProfileController.instance.updateProfile(preferredLanguage: lang['code']),
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
-                                    width: isSel ? 1.5 : 1,
-                                  ),
-                                ),
-                                child: Text(
-                                  lang['label']!,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                    color: isSel ? Colors.white : theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                              ),
+                            padding: const EdgeInsets.only(right: NySpacing.space8),
+                            child: NyFilterPill(
+                              label: lang['label']!,
+                              selected: isSel,
+                              onTap: () => UserProfileController.instance
+                                  .updateProfile(preferredLanguage: lang['code']),
                             ),
                           );
                         }).toList(),
@@ -367,7 +351,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: const Text('2-Day Early Warranty Alerts', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                       subtitle: const Text('Proactively show alerts before machine warranties expire.', style: TextStyle(fontSize: 11)),
                       value: profile.is2DayAlertsEnabled,
-                      activeTrackColor: NyColors.accentLight,
+                      activeTrackColor: NyColors.accentGradient[0],
                       onChanged: (val) => UserProfileController.instance.updateProfile(is2DayAlertsEnabled: val),
                     ),
                     const Divider(),

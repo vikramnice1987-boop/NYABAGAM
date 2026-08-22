@@ -26,11 +26,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Ask NYABAGAM'), findsOneWidget);
-      expect(find.text('Voice Language:'), findsOneWidget);
+      expect(find.text('VOICE LANGUAGE'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
       expect(find.text('Tamil'), findsOneWidget);
       expect(find.text('Who serviced my AC?'), findsOneWidget);
-      expect(find.text('How much did AC service cost?'), findsOneWidget);
+      expect(find.text('AC service cost?'), findsOneWidget);
     });
 
     testWidgets('answers query with grounded facts from memory repository', (tester) async {
@@ -61,8 +61,8 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
 
-      expect(find.text('Grounded Answer'), findsOneWidget);
-      expect(find.text('Verified Fact'), findsOneWidget);
+      expect(find.text('GROUNDED ANSWER'), findsOneWidget);
+      expect(find.text('VERIFIED'), findsOneWidget);
       expect(find.textContaining('Ravi'), findsWidgets);
     });
   });

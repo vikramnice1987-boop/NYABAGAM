@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_loading_state.dart';
@@ -41,10 +42,9 @@ class _ContextBridgePageState extends State<ContextBridgePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Context Bridge'),
-      ),
+    return NyScaffold(
+      title: 'Context Bridge',
+      showBack: true,
       body: _isLoading
           ? const NyLoadingState(message: 'Analyzing context and retrieving history...')
           : ListView(

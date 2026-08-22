@@ -53,7 +53,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('Capture Memory'), findsOneWidget);
+        expect(find.text('Capture memory'), findsOneWidget);
       });
 
       testWidgets('renders AskPage cleanly on ${entry.key} without overflows', (tester) async {
@@ -87,7 +87,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('Warranties & Reminders'), findsOneWidget);
+        expect(find.text('Warranties'), findsOneWidget);
       });
 
       testWidgets('renders ProfilePage cleanly on ${entry.key} without overflows', (tester) async {
@@ -104,7 +104,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
-        expect(find.text('Profile & Settings'), findsOneWidget);
+        expect(find.text('Profile'), findsOneWidget);
       });
     }
   });

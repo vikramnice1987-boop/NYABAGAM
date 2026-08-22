@@ -6,10 +6,14 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/ai/ai_gateway.dart';
 import '../../../core/speech/speech_service.dart';
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_motion.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/ny_typography.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_chip_bar.dart';
+import '../../../shared/components/ny_scaffold.dart';
 
 class CapturePage extends StatefulWidget {
   const CapturePage({super.key});
@@ -226,32 +230,34 @@ class _CapturePageState extends State<CapturePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Capture Memory', style: TextStyle(fontWeight: FontWeight.w800)),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: 8),
+    return NyScaffold(
+      title: 'Capture memory',
+      showBack: true,
+      body: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            NySpacing.gutter,
+            NySpacing.space8,
+            NySpacing.gutter,
+            NySpacing.space40,
+          ),
           children: [
-            // Custom Segmented Switcher (Text | Voice | Camera)
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: theme.colorScheme.outline.withAlpha(50)),
-              ),
-              child: Row(
-                children: [
-                  _buildTabPill(index: 0, label: 'Text Note', icon: Icons.edit_note_rounded, theme: theme),
-                  _buildTabPill(index: 1, label: 'Voice Note', icon: Icons.mic_rounded, theme: theme),
-                  _buildTabPill(index: 2, label: 'Scan / Photo', icon: Icons.photo_camera_rounded, theme: theme),
-                ],
-              ),
+            NySegmented(
+              labels: const <String>['Text', 'Voice', 'Scan'],
+              icons: const <IconData>[
+                Icons.edit_note_rounded,
+                Icons.mic_rounded,
+                Icons.photo_camera_rounded,
+              ],
+              selectedIndex: _selectedTabIndex,
+              onSelected: (i) {
+                if (_isRecording) {
+                  SpeechService.instance.stopListening();
+                  _isRecording = false;
+                }
+                setState(() => _selectedTabIndex = i);
+              },
             ),
-            const SizedBox(height: NySpacing.space16),
+            const SizedBox(height: NySpacing.space20),
 
             // Tab 0: Text Capture
             if (_selectedTabIndex == 0) ...[
@@ -284,97 +290,64 @@ class _CapturePageState extends State<CapturePage> {
 
             // Tab 1: Voice Capture
             if (_selectedTabIndex == 1) ...[
-              // High-Contrast Custom Language Selector
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: theme.colorScheme.outline.withAlpha(70)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.language_rounded, size: 18, color: NyColors.accentLight),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Speech Language:',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              Row(
+                children: [
+                  Icon(Icons.language_rounded, size: 16, color: theme.colorScheme.secondary),
+                  const SizedBox(width: NySpacing.space8),
+                  Text(
+                    'SPEECH LANGUAGE',
+                    style: NyTypography.overline.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: _supportedLanguages.map((lang) {
-                            final isSel = _selectedLanguageCode == lang['code'];
-                            return Padding(
-                              padding: const EdgeInsets.only(right: 6),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedLanguageCode = lang['code']!;
-                                    if (_isRecording) {
-                                      _toggleVoiceRecording();
-                                    }
-                                  });
-                                },
-                                borderRadius: BorderRadius.circular(16),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
-                                      width: isSel ? 1.5 : 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (isSel) ...[
-                                        const Icon(Icons.check_rounded, size: 14, color: Colors.white),
-                                        const SizedBox(width: 4),
-                                      ],
-                                      Text(
-                                        lang['label']!,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                          color: isSel ? Colors.white : theme.colorScheme.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const SizedBox(height: NySpacing.space20),
+              const SizedBox(height: NySpacing.space10),
+              NySegmented(
+                labels: _supportedLanguages.map((l) => l['label']!).toList(),
+                selectedIndex: _supportedLanguages
+                    .indexWhere((l) => l['code'] == _selectedLanguageCode),
+                onSelected: (i) {
+                  setState(() {
+                    _selectedLanguageCode = _supportedLanguages[i]['code']!;
+                    if (_isRecording) {
+                      _toggleVoiceRecording();
+                    }
+                  });
+                },
+              ),
+              const SizedBox(height: NySpacing.space32),
 
-              // Glowing Animated Microphone Button
+              // Primary voice affordance: a glowing gradient orb that swells
+              // while recording.
               Center(
                 child: Column(
                   children: [
                     GestureDetector(
                       onTap: _toggleVoiceRecording,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        padding: EdgeInsets.all(_isRecording ? 28 : 22),
+                        duration: NyMotion.normal,
+                        curve: NyMotion.settle,
+                        width: _isRecording ? 116 : 100,
+                        height: _isRecording ? 116 : 100,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isRecording ? NyColors.statusError : NyColors.accentLight,
+                          gradient: _isRecording
+                              ? null
+                              : const LinearGradient(
+                                  colors: NyColors.accentGradient,
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                          color: _isRecording ? NyColors.statusError : null,
                           boxShadow: [
                             BoxShadow(
-                              color: (_isRecording ? NyColors.statusError : NyColors.accentLight).withAlpha(120),
-                              blurRadius: _isRecording ? 32 : 16,
-                              spreadRadius: _isRecording ? 8 : 2,
+                              color: (_isRecording
+                                      ? NyColors.statusError
+                                      : NyColors.accentGradient[1])
+                                  .withValues(alpha: _isRecording ? 0.62 : 0.46),
+                              blurRadius: _isRecording ? 44 : 30,
+                              spreadRadius: _isRecording ? 6 : 2,
                             ),
                           ],
                         ),
@@ -385,18 +358,24 @@ class _CapturePageState extends State<CapturePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: NySpacing.space20),
                     Text(
-                      _isRecording ? 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}...' : 'Tap to Start Speaking',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: _isRecording ? NyColors.statusError : theme.colorScheme.onSurface,
+                      _isRecording
+                          ? 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}'
+                          : 'Tap to start speaking',
+                      style: NyTypography.headlineSmall.copyWith(
+                        color: _isRecording
+                            ? NyColors.statusError
+                            : theme.colorScheme.onSurface,
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: NySpacing.space6),
                     Text(
                       _liveSpeechStatus,
-                      style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(160)),
+                      style: NyTypography.bodySmall.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -438,29 +417,19 @@ class _CapturePageState extends State<CapturePage> {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        foregroundColor: theme.colorScheme.onSurface,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-                      ),
-                      icon: const Icon(Icons.photo_camera_rounded),
-                      label: const Text('Take Photo', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: NyButton(
+                      label: 'Take photo',
+                      icon: Icons.photo_camera_rounded,
+                      variant: NyButtonVariant.secondary,
                       onPressed: _pickFromCamera,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: NySpacing.space12),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                        foregroundColor: theme.colorScheme.onSurface,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
-                      ),
-                      icon: const Icon(Icons.photo_library_rounded),
-                      label: const Text('Upload File', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: NyButton(
+                      label: 'Upload',
+                      icon: Icons.photo_library_rounded,
+                      variant: NyButtonVariant.secondary,
                       onPressed: _pickFromGallery,
                     ),
                   ),
@@ -546,63 +515,8 @@ class _CapturePageState extends State<CapturePage> {
               onPressed: _continueWithUnderstanding,
             ),
 
-            // Bottom Safe Area Spacing to prevent overlap with Netlify / mobile navigation bars
-            const SizedBox(height: 60),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTabPill({
-    required int index,
-    required String label,
-    required IconData icon,
-    required ThemeData theme,
-  }) {
-    final isSelected = _selectedTabIndex == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          if (_isRecording) {
-            SpeechService.instance.stopListening();
-            _isRecording = false;
-          }
-          setState(() => _selectedTabIndex = index);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(26),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? Colors.white : theme.colorScheme.onSurface.withAlpha(180),
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    fontSize: 11,
-                    color: isSelected ? Colors.white : theme.colorScheme.onSurface.withAlpha(180),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 

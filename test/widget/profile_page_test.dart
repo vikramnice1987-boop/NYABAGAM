@@ -25,7 +25,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Profile & Settings'), findsOneWidget);
+      expect(find.text('Profile'), findsOneWidget);
       expect(find.text('Speech & Language Preferences'), findsOneWidget);
       expect(find.text('2-Day Early Warranty Alerts'), findsOneWidget);
       expect(find.text('WhatsApp 1-Tap Assistant'), findsOneWidget);

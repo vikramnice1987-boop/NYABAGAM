@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_radius.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../profile/presentation/user_profile_controller.dart';
@@ -87,9 +88,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
+    return NyScaffold(
+      body: Column(
           children: [
             // Top Skip / Progress Bar
             Padding(
@@ -189,7 +189,6 @@ class _OnboardingPageState extends State<OnboardingPage> {
               ),
             ),
           ],
-        ),
       ),
     );
   }

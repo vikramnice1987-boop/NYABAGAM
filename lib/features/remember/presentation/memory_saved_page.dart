@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_elevation.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/ny_typography.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_empty_state.dart';
 import '../../../shared/components/ny_entity_chip.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../memory/domain/memory_models.dart';
 
 class MemorySavedPage extends StatelessWidget {
@@ -15,71 +20,98 @@ class MemorySavedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Memory Remembered'),
-        automaticallyImplyLeading: false,
-      ),
+
+    return NyScaffold(
       body: Padding(
         padding: const EdgeInsets.all(NySpacing.space24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Spacer(),
-            const Center(
-              child: Icon(
-                Icons.check_circle_outline,
-                size: 64,
-                color: NyColors.statusSuccess,
-              ),
-            ),
-            const SizedBox(height: NySpacing.space16),
-            Text(
-              'Memory Confirmed & Saved',
-              style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Linked to your knowledge graph with verified evidence provenance.',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withAlpha(180)),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: NySpacing.space24),
-
-            NyCard(
+            NyReveal(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    memory.title,
-                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  const Center(
+                    child: NyMedallion(
+                      icon: Icons.check_rounded,
+                      color: NyColors.statusSuccess,
+                      size: 96,
+                    ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(memory.summary, style: theme.textTheme.bodyMedium),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      for (final p in memory.people) NyEntityChip(label: p, type: NyEntityType.person),
-                      for (final t in memory.things) NyEntityChip(label: t, type: NyEntityType.thing),
-                      for (final o in memory.organizations) NyEntityChip(label: o, type: NyEntityType.organization),
-                    ],
+                  const SizedBox(height: NySpacing.space24),
+                  Text(
+                    'Memory saved',
+                    style: NyTypography.displaySmall.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: NySpacing.space8),
+                  Text(
+                    'Linked into your knowledge graph with verified evidence provenance.',
+                    style: NyTypography.bodyMedium.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: NySpacing.space28),
+
+            NyReveal(
+              index: 1,
+              child: NyCard(
+                level: NyGlassLevel.floating,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      memory.title,
+                      style: NyTypography.titleLarge.copyWith(
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: NySpacing.space8),
+                    Text(
+                      memory.summary,
+                      style: NyTypography.bodySmall.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        height: 1.5,
+                      ),
+                    ),
+                    if (memory.people.isNotEmpty ||
+                        memory.things.isNotEmpty ||
+                        memory.organizations.isNotEmpty) ...[
+                      const SizedBox(height: NySpacing.space14),
+                      Wrap(
+                        spacing: NySpacing.space6,
+                        runSpacing: NySpacing.space6,
+                        children: [
+                          for (final p in memory.people)
+                            NyEntityChip(label: p, type: NyEntityType.person),
+                          for (final t in memory.things)
+                            NyEntityChip(label: t, type: NyEntityType.thing),
+                          for (final o in memory.organizations)
+                            NyEntityChip(label: o, type: NyEntityType.organization),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
             const Spacer(),
 
             NyButton(
-              label: 'Ask a Question about this',
-              icon: Icons.search,
+              label: 'Ask about this',
+              icon: Icons.search_rounded,
               variant: NyButtonVariant.secondary,
               onPressed: () => context.go('/ask'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: NySpacing.space12),
             NyButton(
-              label: 'Back to Home',
+              label: 'Back to home',
               onPressed: () => context.go('/'),
             ),
           ],

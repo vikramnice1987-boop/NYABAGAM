@@ -20,13 +20,13 @@ void main() {
 
       // Verify Home Screen
       expect(find.text('NYABAGAM'), findsOneWidget);
-      expect(find.text('Capture a thought or voice note'), findsOneWidget);
+      expect(find.text('Capture a thought'), findsOneWidget);
 
       // 2. Open Capture Page
-      await tester.tap(find.text('Capture a thought or voice note'));
+      await tester.tap(find.text('Capture a thought'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Capture Memory'), findsOneWidget);
+      expect(find.text('Capture memory'), findsOneWidget);
 
       // Enter capture: "Ravi serviced my AC today for 800."
       await tester.enterText(find.byType(TextField).first, 'Ravi serviced my AC today for 800.');
@@ -34,7 +34,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // 3. Review Candidate Page
-      expect(find.text('Review Memory Candidate'), findsOneWidget);
+      expect(find.text('Review candidate'), findsOneWidget);
       expect(find.text('Ravi'), findsOneWidget);
       expect(find.text('AC'), findsWidgets);
 
@@ -49,10 +49,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // 4. Memory Remembered Page
-      expect(find.text('Memory Confirmed & Saved'), findsOneWidget);
+      expect(find.text('Memory saved'), findsOneWidget);
 
       // Go to Ask Screen
-      await tester.tap(find.text('Ask a Question about this'));
+      await tester.tap(find.text('Ask about this'));
       await tester.pumpAndSettle();
 
       // 5. Ask Screen
@@ -61,14 +61,20 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify grounded answer
-      expect(find.text('Grounded Answer'), findsOneWidget);
+      expect(find.text('GROUNDED ANSWER'), findsOneWidget);
       expect(find.textContaining('Ravi'), findsWidgets);
 
       // 6. Test Context Bridge - Tap Home Tab
       await tester.tap(find.text('Home'));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('"My AC isn\'t working"'));
+      // The redesigned home surface is taller, so the Context Bridge triggers
+      // sit below the fold on a small viewport. Scroll them into view first,
+      // otherwise the tap lands on the floating nav bar instead.
+      final acTrigger = find.text('My AC is not working');
+      await tester.ensureVisible(acTrigger);
+      await tester.pumpAndSettle();
+      await tester.tap(acTrigger);
       await tester.pumpAndSettle();
 
       expect(find.text('Context Bridge'), findsOneWidget);
@@ -92,7 +98,7 @@ void main() {
       await tester.tap(find.text('Record Service Outcome (When Done)'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Record Outcome'), findsOneWidget);
+      expect(find.text('Record outcome'), findsOneWidget);
       await tester.tap(find.text('Save Outcome & Update Memory'));
       await tester.pumpAndSettle();
 

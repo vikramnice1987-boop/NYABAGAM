@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../memory/data/memory_repository.dart';
@@ -55,10 +56,9 @@ class _OutcomeRecordPageState extends State<OutcomeRecordPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Record Outcome'),
-      ),
+    return NyScaffold(
+      title: 'Record outcome',
+      showBack: true,
       body: ListView(
         padding: const EdgeInsets.all(NySpacing.space20),
         children: [

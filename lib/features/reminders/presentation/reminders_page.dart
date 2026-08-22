@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_elevation.dart';
+import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/ny_typography.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_chip_bar.dart';
 import '../../../shared/components/ny_loading_state.dart';
+import '../../../shared/components/ny_scaffold.dart';
+import '../../../shared/components/ny_section.dart';
 import '../../memory/data/memory_repository.dart';
 import '../../memory/domain/memory_models.dart';
 
@@ -116,69 +122,80 @@ class _RemindersPageState extends State<RemindersPage> {
     final now = DateTime.now();
     final urgent = _urgentList;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Warranties & Reminders', style: TextStyle(fontWeight: FontWeight.w800)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded),
-            onPressed: _loadReminders,
-            tooltip: 'Refresh',
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const NyLoadingState(message: 'Loading machine warranties and reminders...')
+    return NyScaffold(
+      title: 'Warranties',
+      showBack: true,
+      actions: [
+        NyIconButton(
+          icon: Icons.refresh_rounded,
+          onPressed: _loadReminders,
+          tooltip: 'Refresh',
+        ),
+      ],
+      body: _isLoading
+            ? const NyLoadingState(message: 'Loading warranties and reminders...')
             : ListView(
-                padding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: 12),
+                padding: const EdgeInsets.fromLTRB(
+                  NySpacing.gutter,
+                  NySpacing.space8,
+                  NySpacing.gutter,
+                  NySpacing.space40,
+                ),
                 children: [
-                  // Header
-                  Text(
-                    'Machine & Appliance Lifecycle',
-                    style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                  NyReveal(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const NyGradientText('Machine lifecycle'),
+                        const SizedBox(height: NySpacing.space8),
+                        Text(
+                          'Proactive two-day alerts for warranties, service renewals and scheduled maintenance.',
+                          style: NyTypography.bodyMedium.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Proactive 2-day early alerts for warranties, service renewals, and scheduled maintenance.',
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withAlpha(160)),
-                  ),
-                  const SizedBox(height: NySpacing.space16),
+                  const SizedBox(height: NySpacing.space20),
 
                   // Urgent 2-Day Expiry Alerts Section
                   if (urgent.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: NyColors.statusError.withAlpha(25),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: NyColors.statusError.withAlpha(140), width: 1.5),
+                    NyCard(
+                      level: NyGlassLevel.floating,
+                      tint: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          NyColors.statusError.withValues(alpha: 0.22),
+                          NyColors.statusError.withValues(alpha: 0.05),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              const Icon(Icons.warning_amber_rounded, color: NyColors.statusError, size: 22),
-                              const SizedBox(width: 8),
+                              const Icon(Icons.warning_amber_rounded, color: NyColors.statusError, size: 20),
+                              const SizedBox(width: NySpacing.space8),
                               Expanded(
                                 child: Text(
-                                  'Action Required (${urgent.length} Machine Alert${urgent.length > 1 ? "s" : ""})',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
+                                  'Action required (${urgent.length} alert${urgent.length > 1 ? "s" : ""})',
+                                  style: NyTypography.titleMedium.copyWith(
                                     color: NyColors.statusError,
                                   ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
-                          const Text(
-                            'The following machine warranty or service expires within 2 days. Please check and schedule inspection:',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                          const SizedBox(height: NySpacing.space6),
+                          Text(
+                            'These expire within two days. Check and schedule an inspection.',
+                            style: NyTypography.bodySmall.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.82),
+                            ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: NySpacing.space14),
 
                           for (final m in urgent)
                             _buildUrgentCard(m, theme, now),
@@ -188,39 +205,11 @@ class _RemindersPageState extends State<RemindersPage> {
                     const SizedBox(height: NySpacing.space20),
                   ],
 
-                  // Filter Chips
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: _filters.map((filter) {
-                        final isSel = _selectedFilter == filter;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: InkWell(
-                            onTap: () => setState(() => _selectedFilter = filter),
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                              decoration: BoxDecoration(
-                                color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
-                                ),
-                              ),
-                              child: Text(
-                                filter,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                  color: isSel ? Colors.white : theme.colorScheme.onSurface,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
+                  NyChipBar(
+                    labels: _filters,
+                    selectedIndex: _filters.indexOf(_selectedFilter),
+                    onSelected: (i) => setState(() => _selectedFilter = _filters[i]),
+                    padding: EdgeInsets.zero,
                   ),
                   const SizedBox(height: NySpacing.space16),
 
@@ -245,7 +234,7 @@ class _RemindersPageState extends State<RemindersPage> {
                           const SizedBox(height: 14),
                           ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: NyColors.accentLight,
+                              backgroundColor: NyColors.accentGradient[0],
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                             ),
@@ -265,16 +254,31 @@ class _RemindersPageState extends State<RemindersPage> {
                       ),
                   ],
 
-                  const SizedBox(height: 40),
                 ],
               ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/capture'),
-        icon: const Icon(Icons.add_task_rounded),
-        label: const Text('Track New Machine', style: TextStyle(fontWeight: FontWeight.w800)),
-        backgroundColor: NyColors.accentLight,
-        foregroundColor: Colors.white,
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          borderRadius: NyRadius.borderPill,
+          boxShadow: [
+            BoxShadow(
+              color: NyColors.accentGradient[1].withValues(alpha: 0.44),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/capture'),
+          icon: const Icon(Icons.add_task_rounded, color: Colors.white),
+          label: Text(
+            'Track machine',
+            style: NyTypography.labelLarge.copyWith(color: Colors.white),
+          ),
+          backgroundColor: NyColors.accentGradient[0],
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: const RoundedRectangleBorder(borderRadius: NyRadius.borderPill),
+        ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
@@ -42,10 +43,9 @@ class MemoryDetailPage extends StatelessWidget {
     final hasService = memory.serviceDueAt != null;
     final wDays = memory.warrantyDaysRemaining;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Memory Detail', style: TextStyle(fontWeight: FontWeight.w700)),
-      ),
+    return NyScaffold(
+      title: 'Memory detail',
+      showBack: true,
       body: ListView(
         padding: const EdgeInsets.all(NySpacing.space16),
         children: [

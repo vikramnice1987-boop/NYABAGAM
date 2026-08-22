@@ -41,7 +41,7 @@ void main() {
       );
 
       expect(find.text('Ravi'), findsOneWidget);
-      expect(find.byIcon(Icons.person_outline), findsOneWidget);
+      expect(find.byIcon(Icons.person_rounded), findsOneWidget);
     });
 
     testWidgets('NyEvidenceCard renders snippet and date', (tester) async {
@@ -58,7 +58,7 @@ void main() {
         ),
       );
 
-      expect(find.textContaining('Evidence Source'), findsOneWidget);
+      expect(find.textContaining('AC Service'), findsOneWidget);
       expect(find.textContaining('Ravi serviced the AC for 800'), findsOneWidget);
     });
 

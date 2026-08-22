@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/ny_colors.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
@@ -111,10 +112,10 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
     final theme = Theme.of(context);
     final now = DateTime.now();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Review Memory Candidate', style: TextStyle(fontWeight: FontWeight.w700)),
-      ),
+    return NyScaffold(
+      title: 'Review candidate',
+      eyebrow: 'Understand',
+      showBack: true,
       body: ListView(
         padding: const EdgeInsets.all(NySpacing.space16),
         children: [

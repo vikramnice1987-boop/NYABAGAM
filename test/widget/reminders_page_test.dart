@@ -37,9 +37,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Warranties & Reminders'), findsOneWidget);
-      expect(find.text('Machine & Appliance Lifecycle'), findsOneWidget);
-      expect(find.text('Action Required (1 Machine Alert)'), findsOneWidget);
+      expect(find.text('Warranties'), findsOneWidget);
+      expect(find.text('Machine lifecycle'), findsOneWidget);
+      expect(find.text('Action required (1 alert)'), findsOneWidget);
       expect(find.text('Expiring Soon (<= 2 Days)'), findsOneWidget);
       expect(find.text('Appliances'), findsOneWidget);
     });

@@ -1,13 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/ai/ai_gateway.dart';
 import '../../../core/speech/speech_service.dart';
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_elevation.dart';
+import '../../../core/theme/ny_motion.dart';
+import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
+import '../../../core/theme/ny_typography.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_chip_bar.dart';
 import '../../../shared/components/ny_evidence_card.dart';
 import '../../../shared/components/ny_loading_state.dart';
+import '../../../shared/components/ny_scaffold.dart';
+import '../../../shared/components/ny_section.dart';
 import '../../memory/data/memory_repository.dart';
 import '../../memory/domain/memory_models.dart';
 
@@ -156,355 +164,495 @@ class _AskPageState extends State<AskPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ask NYABAGAM', style: TextStyle(fontWeight: FontWeight.w800)),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: NySpacing.space16, vertical: 12),
-              children: [
-                Text(
-                  'Find any past detail naturally.',
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Type or speak your question in English or Tamil. Answers are strictly grounded in your confirmed memories.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withAlpha(170),
-                  ),
-                ),
-                const SizedBox(height: NySpacing.space16),
 
-                // High-Contrast Voice Language Selector Pills
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withAlpha(120),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.translate_rounded, size: 16, color: NyColors.accentLight),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Voice Language:',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+    return NyScaffold(
+      title: 'Ask NYABAGAM',
+      padBottomForNav: true,
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+              NySpacing.gutter,
+              NySpacing.space8,
+              NySpacing.gutter,
+              NySpacing.space32,
+            ),
+            children: <Widget>[
+              NyReveal(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const NyGradientText('Find any past detail'),
+                    Text(
+                      'naturally.',
+                      style: NyTypography.displayMedium.copyWith(
+                        color: theme.colorScheme.onSurface,
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: _askLanguages.map((lang) {
-                              final isSel = _selectedLang == lang['code'];
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 6),
-                                child: InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedLang = lang['code']!;
-                                      if (_isListening) {
-                                        _toggleVoiceSearch();
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: isSel ? NyColors.accentLight : theme.colorScheme.surface,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: isSel ? NyColors.accentLight : theme.colorScheme.outline.withAlpha(80),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      lang['label']!,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                                        color: isSel ? Colors.white : theme.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: NySpacing.space12),
-
-                // High-Contrast Modern Search Bar
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: _isListening ? NyColors.statusError : NyColors.accentLight.withAlpha(140),
-                      width: _isListening ? 2 : 1.5,
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (_isListening ? NyColors.statusError : NyColors.accentLight).withAlpha(40),
-                        blurRadius: 16,
-                        spreadRadius: 2,
+                    const SizedBox(height: NySpacing.space10),
+                    Text(
+                      'Type or speak in English or Tamil. Every answer is grounded strictly in your confirmed memories.',
+                      style: NyTypography.bodyMedium.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 10),
-                        child: Icon(Icons.search_rounded, size: 22, color: NyColors.accentLight),
-                      ),
-                      Expanded(
-                        child: TextField(
-                          controller: _queryController,
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: _ask,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Type or speak your question...',
-                            hintStyle: TextStyle(
-                              fontSize: 14,
-                              color: theme.colorScheme.onSurface.withAlpha(130),
-                            ),
-                            border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      if (_queryController.text.isNotEmpty)
-                        IconButton(
-                          tooltip: 'Clear',
-                          icon: const Icon(Icons.close_rounded, size: 18),
-                          onPressed: () {
-                            _queryController.clear();
-                            setState(() {
-                              _result = null;
-                              _matchingEvidence.clear();
-                            });
-                          },
-                        ),
-
-                      // Voice Search Mic Button (High Visibility)
-                      GestureDetector(
-                        onTap: _toggleVoiceSearch,
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: _isListening ? NyColors.statusError : NyColors.accentLight.withAlpha(30),
-                            border: Border.all(
-                              color: _isListening ? NyColors.statusError : NyColors.accentLight,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Icon(
-                            _isListening ? Icons.stop_rounded : Icons.mic_rounded,
-                            size: 20,
-                            color: _isListening ? Colors.white : NyColors.accentLight,
-                          ),
-                        ),
-                      ),
-
-                      // Submit Search Button (High Visibility)
-                      GestureDetector(
-                        onTap: () => _ask(_queryController.text),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.only(right: 4),
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: NyColors.accentLight,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_rounded,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Live Voice Recording Status Banner
-                if (_isListening) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: NyColors.statusError.withAlpha(25),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: NyColors.statusError.withAlpha(120)),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.mic_rounded, color: NyColors.statusError, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            _voiceStatus,
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: NyColors.statusError),
-                          ),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: NyColors.statusError,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            minimumSize: Size.zero,
-                          ),
-                          onPressed: _toggleVoiceSearch,
-                          child: const Text('Search Now', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800)),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: NySpacing.space16),
-
-                // Example Query Chips (High Contrast & Clear)
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildSuggestionChip('Who serviced my AC?', Icons.ac_unit_rounded, theme),
-                    _buildSuggestionChip('How much did AC service cost?', Icons.currency_rupee_rounded, theme),
-                    _buildSuggestionChip('When was my laptop serviced?', Icons.laptop_mac_rounded, theme),
                   ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space24),
+
+              NyReveal(
+                index: 1,
+                child: Row(
+                  children: <Widget>[
+                    Icon(
+                      Icons.translate_rounded,
+                      size: 16,
+                      color: theme.colorScheme.secondary,
+                    ),
+                    const SizedBox(width: NySpacing.space8),
+                    Text(
+                      'VOICE LANGUAGE',
+                      style: NyTypography.overline.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space10),
+              NyReveal(
+                index: 1,
+                child: NySegmented(
+                  labels: _askLanguages.map((l) => l['label']!).toList(),
+                  selectedIndex: _askLanguages
+                      .indexWhere((l) => l['code'] == _selectedLang),
+                  onSelected: (i) {
+                    setState(() {
+                      _selectedLang = _askLanguages[i]['code']!;
+                      if (_isListening) _toggleVoiceSearch();
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: NySpacing.space16),
+
+              NyReveal(index: 2, child: _SearchBar(
+                controller: _queryController,
+                isListening: _isListening,
+                onSubmit: _ask,
+                onToggleVoice: _toggleVoiceSearch,
+                onClear: () {
+                  _queryController.clear();
+                  setState(() {
+                    _result = null;
+                    _matchingEvidence.clear();
+                  });
+                },
+              )),
+
+              if (_isListening) ...<Widget>[
+                const SizedBox(height: NySpacing.space12),
+                _ListeningBanner(
+                  status: _voiceStatus,
+                  onSearchNow: _toggleVoiceSearch,
+                ),
+              ],
+
+              const SizedBox(height: NySpacing.space20),
+
+              NyReveal(
+                index: 3,
+                child: Wrap(
+                  spacing: NySpacing.space8,
+                  runSpacing: NySpacing.space8,
+                  children: <Widget>[
+                    NyFilterPill(
+                      label: 'Who serviced my AC?',
+                      icon: Icons.ac_unit_rounded,
+                      selected: false,
+                      onTap: () => _ask('Who serviced my AC?'),
+                    ),
+                    NyFilterPill(
+                      label: 'AC service cost?',
+                      icon: Icons.currency_rupee_rounded,
+                      selected: false,
+                      onTap: () => _ask('How much did AC service cost?'),
+                    ),
+                    NyFilterPill(
+                      label: 'Laptop serviced?',
+                      icon: Icons.laptop_mac_rounded,
+                      selected: false,
+                      onTap: () => _ask('When was my laptop serviced?'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: NySpacing.space28),
+
+              if (_isSearching)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: NySpacing.space32),
+                  child: NyLoadingState(
+                    message: 'Searching memories and reasoning...',
+                  ),
+                )
+              else if (_result != null) ...<Widget>[
+                _AnswerCard(
+                  result: _result!,
+                  onAction: () => context.push(
+                    '/action-approval',
+                    extra: _result!.suggestedActions.first,
+                  ),
                 ),
                 const SizedBox(height: NySpacing.space24),
-
-                // Search Loading State
-                if (_isSearching)
-                  const NyLoadingState(message: 'Searching memories and reasoning with AI...')
-                else if (_result != null) ...[
-                  // Grounded Answer Card
-                  NyCard(
-                    backgroundColor: theme.colorScheme.primaryContainer.withAlpha(100),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.auto_awesome_rounded, size: 18, color: NyColors.accentLight),
-                            const SizedBox(width: 8),
-                            const Expanded(
-                              child: Text(
-                                'Grounded Answer',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: NyColors.accentLight,
-                                ),
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: NyColors.statusSuccess.withAlpha(30),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Text('Verified Fact', style: TextStyle(fontSize: 11, color: NyColors.statusSuccess, fontWeight: FontWeight.w700)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: NySpacing.space12),
-                        Text(
-                          _result!.answer,
-                          style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600, height: 1.4),
-                        ),
-                        if (_result!.suggestedActions.isNotEmpty) ...[
-                          const SizedBox(height: NySpacing.space16),
-                          NyButton(
-                            label: _result!.suggestedActions.first.title,
-                            icon: Icons.chat_rounded,
-                            onPressed: () => context.push(
-                              '/action-approval',
-                              extra: _result!.suggestedActions.first,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                if (_matchingEvidence.isNotEmpty) ...<Widget>[
+                  const NySectionHeader(
+                    title: 'Source evidence',
+                    subtitle: 'The records this answer was built from',
+                    icon: Icons.verified_rounded,
                   ),
-                  const SizedBox(height: NySpacing.space20),
-
-                  // Source Evidence Cards
-                  if (_matchingEvidence.isNotEmpty) ...[
-                    Text(
-                      'Source Evidence Records',
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    for (final ev in _matchingEvidence)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: NyEvidenceCard(
-                          title: ev.title,
-                          snippet: ev.summary,
-                          date: ev.occurredAt ?? ev.createdAt,
-                          onTap: () => context.push('/memory-detail', extra: ev),
-                        ),
+                  for (final ev in _matchingEvidence)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: NySpacing.space10),
+                      child: NyEvidenceCard(
+                        title: ev.title,
+                        snippet: ev.summary,
+                        date: ev.occurredAt ?? ev.createdAt,
+                        onTap: () => context.push('/memory-detail', extra: ev),
                       ),
-                  ],
+                    ),
                 ],
-
-                const SizedBox(height: 40),
               ],
-            ),
+            ],
           ),
         ),
       ),
     );
   }
+}
 
-  Widget _buildSuggestionChip(String text, IconData icon, ThemeData theme) {
-    return InkWell(
-      onTap: () => _ask(text),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.colorScheme.outline.withAlpha(80)),
+/// Glass search pill. The border and glow shift to the alert colour while the
+/// microphone is live, so recording state is unmistakable.
+class _SearchBar extends StatefulWidget {
+  const _SearchBar({
+    required this.controller,
+    required this.isListening,
+    required this.onSubmit,
+    required this.onToggleVoice,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final bool isListening;
+  final ValueChanged<String> onSubmit;
+  final VoidCallback onToggleVoice;
+  final VoidCallback onClear;
+
+  @override
+  State<_SearchBar> createState() => _SearchBarState();
+}
+
+class _SearchBarState extends State<_SearchBar> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = widget.isListening
+        ? NyColors.statusError
+        : theme.colorScheme.primary;
+
+    return AnimatedContainer(
+      duration: NyMotion.fast,
+      curve: NyMotion.settle,
+      padding: const EdgeInsets.symmetric(
+        horizontal: NySpacing.space6,
+        vertical: NySpacing.space6,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? NyColors.glassFillDark : NyColors.glassFillLight,
+        borderRadius: NyRadius.borderPill,
+        border: Border.all(
+          color: accent.withValues(alpha: widget.isListening ? 0.95 : 0.45),
+          width: widget.isListening ? 1.8 : 1.2,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: NyColors.accentLight),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                text,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.onSurface,
+        boxShadow: <BoxShadow>[
+          BoxShadow(
+            color: accent.withValues(alpha: widget.isListening ? 0.34 : 0.18),
+            blurRadius: widget.isListening ? 26 : 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: NySpacing.space10),
+            child: Icon(Icons.search_rounded, size: 20, color: accent),
+          ),
+          Expanded(
+            child: TextField(
+              controller: widget.controller,
+              textInputAction: TextInputAction.search,
+              onSubmitted: widget.onSubmit,
+              style: NyTypography.bodyMedium.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+              decoration: InputDecoration(
+                hintText: 'Ask anything you saved...',
+                hintStyle: NyTypography.bodyMedium.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant
+                      .withValues(alpha: 0.75),
+                ),
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: NySpacing.space12,
                 ),
               ),
             ),
-          ],
+          ),
+          if (widget.controller.text.isNotEmpty)
+            IconButton(
+              tooltip: 'Clear',
+              iconSize: 18,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.close_rounded),
+              onPressed: widget.onClear,
+            ),
+          _RoundAction(
+            icon: widget.isListening ? Icons.stop_rounded : Icons.mic_rounded,
+            tooltip: widget.isListening ? 'Stop listening' : 'Speak',
+            filled: widget.isListening,
+            color: widget.isListening
+                ? NyColors.statusError
+                : theme.colorScheme.secondary,
+            onTap: widget.onToggleVoice,
+          ),
+          const SizedBox(width: NySpacing.space4),
+          _RoundAction(
+            icon: Icons.arrow_forward_rounded,
+            tooltip: 'Search',
+            filled: true,
+            gradient: true,
+            onTap: () => widget.onSubmit(widget.controller.text),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoundAction extends StatelessWidget {
+  const _RoundAction({
+    required this.icon,
+    required this.onTap,
+    this.tooltip,
+    this.filled = false,
+    this.gradient = false,
+    this.color,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? tooltip;
+  final bool filled;
+  final bool gradient;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final tint = color ?? Theme.of(context).colorScheme.primary;
+    return Tooltip(
+      message: tooltip ?? '',
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: gradient
+                ? const LinearGradient(
+                    colors: NyColors.accentGradient,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: gradient
+                ? null
+                : (filled ? tint : tint.withValues(alpha: 0.16)),
+            border: filled || gradient
+                ? null
+                : Border.all(color: tint.withValues(alpha: 0.45)),
+            boxShadow: gradient
+                ? <BoxShadow>[
+                    BoxShadow(
+                      color: NyColors.accentGradient[1]
+                          .withValues(alpha: 0.44),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : const <BoxShadow>[],
+          ),
+          child: Icon(
+            icon,
+            size: 19,
+            color: filled || gradient ? Colors.white : tint,
+          ),
         ),
+      ),
+    );
+  }
+}
+
+class _ListeningBanner extends StatelessWidget {
+  const _ListeningBanner({required this.status, required this.onSearchNow});
+
+  final String status;
+  final VoidCallback onSearchNow;
+
+  @override
+  Widget build(BuildContext context) {
+    const alert = NyColors.statusError;
+    return Container(
+      padding: const EdgeInsets.all(NySpacing.space12),
+      decoration: BoxDecoration(
+        color: alert.withValues(alpha: 0.12),
+        borderRadius: NyRadius.borderLg,
+        border: Border.all(color: alert.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        children: <Widget>[
+          const NyPulseOrb(size: 26),
+          const SizedBox(width: NySpacing.space10),
+          Expanded(
+            child: Text(
+              status,
+              style: NyTypography.labelMedium.copyWith(color: alert),
+            ),
+          ),
+          const SizedBox(width: NySpacing.space8),
+          GestureDetector(
+            onTap: onSearchNow,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: NySpacing.space12,
+                vertical: NySpacing.space6,
+              ),
+              decoration: BoxDecoration(
+                color: alert,
+                borderRadius: NyRadius.borderPill,
+              ),
+              child: Text(
+                'Search now',
+                style: NyTypography.labelSmall.copyWith(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The grounded answer. Highest-elevation glass on the screen, tinted with the
+/// accent so it clearly outranks the evidence beneath it.
+class _AnswerCard extends StatelessWidget {
+  const _AnswerCard({required this.result, required this.onAction});
+
+  final AskResult result;
+  final VoidCallback onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return NyCard(
+      level: NyGlassLevel.floating,
+      padding: const EdgeInsets.all(NySpacing.space20),
+      tint: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          NyColors.orbIndigo.withValues(alpha: 0.22),
+          NyColors.orbCyan.withValues(alpha: 0.06),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                Icons.auto_awesome_rounded,
+                size: 17,
+                color: theme.colorScheme.secondary,
+              ),
+              const SizedBox(width: NySpacing.space8),
+              Expanded(
+                child: Text(
+                  'GROUNDED ANSWER',
+                  style: NyTypography.overline.copyWith(
+                    color: theme.colorScheme.secondary,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: NySpacing.space8,
+                  vertical: NySpacing.space2,
+                ),
+                decoration: BoxDecoration(
+                  color: NyColors.statusSuccess.withValues(alpha: 0.16),
+                  borderRadius: NyRadius.borderPill,
+                  border: Border.all(
+                    color: NyColors.statusSuccess.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Text(
+                  'VERIFIED',
+                  style: NyTypography.labelSmall.copyWith(
+                    color: NyColors.statusSuccess,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: NySpacing.space14),
+          Text(
+            result.answer,
+            style: NyTypography.bodyLarge.copyWith(
+              color: theme.colorScheme.onSurface,
+              height: 1.6,
+            ),
+          ),
+          if (result.suggestedActions.isNotEmpty) ...<Widget>[
+            const SizedBox(height: NySpacing.space20),
+            NyButton(
+              label: result.suggestedActions.first.title,
+              icon: Icons.chat_rounded,
+              onPressed: onAction,
+            ),
+          ],
+        ],
       ),
     );
   }

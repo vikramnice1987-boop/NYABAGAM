@@ -52,7 +52,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Record Outcome'), findsOneWidget);
+      expect(find.text('Record outcome'), findsOneWidget);
       expect(find.text('Complete the Memory Loop'), findsOneWidget);
       expect(find.text('Save Outcome & Update Memory'), findsOneWidget);
     });
