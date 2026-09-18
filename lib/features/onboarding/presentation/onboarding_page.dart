@@ -5,6 +5,10 @@ import '../../../core/theme/ny_radius.dart';
 import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
+import '../../../core/notifications/notification_service.dart';
+import '../../../core/theme/ny_motion.dart';
+import '../../auth/data/phone_number.dart';
+import '../../auth/presentation/otp_verification_page.dart';
 import '../../profile/presentation/user_profile_controller.dart';
 
 class AvatarOption {
@@ -26,11 +30,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final _nameController = TextEditingController(text: 'Vikram');
-  final _phoneController = TextEditingController(text: '+91 98400 12345');
-  final _cityController = TextEditingController(text: 'Chennai');
+  // Empty by design. These used to be seeded with a demo identity, which meant
+  // a real user had to notice and delete someone else's details first.
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _cityController = TextEditingController();
   String _selectedLanguage = 'en-IN';
   String _selectedAvatarId = 'user';
+  String? _nameError;
+  String? _phoneError;
+  bool _saving = false;
 
   static const List<AvatarOption> _avatars = [
     AvatarOption('user', Icons.person_rounded, 'User', NyColors.accentLight),
@@ -66,22 +75,60 @@ class _OnboardingPageState extends State<OnboardingPage> {
     }
   }
 
-  Future<void> _completeOnboarding() async {
-    final name = _nameController.text.trim().isNotEmpty ? _nameController.text.trim() : 'User';
-    final phone = _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : '+91 98400 12345';
-    final city = _cityController.text.trim().isNotEmpty ? _cityController.text.trim() : 'Chennai';
+  bool _validate() {
+    final name = _nameController.text.trim();
+    final phone = PhoneNumber.normalise(_phoneController.text);
+    setState(() {
+      _nameError = name.isEmpty ? 'Enter your name' : null;
+      _phoneError = phone == null ? 'Enter a valid mobile number' : null;
+    });
+    return _nameError == null && _phoneError == null;
+  }
 
-    await UserProfileController.instance.completeOnboarding(
-      name: name,
-      phone: phone,
-      city: city,
-      preferredLanguage: _selectedLanguage,
-      avatarId: _selectedAvatarId,
+  Future<void> _completeOnboarding() async {
+    if (!_validate()) {
+      // Jump back to the details slide so the errors are visible.
+      _pageController.animateToPage(
+        2,
+        duration: NyMotion.normal,
+        curve: NyMotion.settle,
+      );
+      return;
+    }
+
+    final phone = PhoneNumber.normalise(_phoneController.text)!;
+    setState(() => _saving = true);
+
+    // Verify before creating the account, so the stored number is one the user
+    // actually controls.
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => OtpVerificationPage(phoneE164: phone),
+      ),
     );
 
-    if (mounted) {
-      context.go('/');
-    }
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    // Backing out of verification must not silently create the profile.
+    if (verified == null) return;
+
+    await UserProfileController.instance.completeOnboarding(
+      name: _nameController.text.trim(),
+      phone: phone,
+      city: _cityController.text.trim(),
+      preferredLanguage: _selectedLanguage,
+      avatarId: _selectedAvatarId,
+      isPhoneVerified: verified,
+    );
+
+    // Ask for notification access now: the reminder promise made during
+    // onboarding is worthless without it.
+    await NotificationService.instance.requestPermissions();
+    await NotificationService.instance.requestExactAlarmPermission();
+    await UserProfileController.instance.rescheduleReminders();
+
+    if (mounted) context.go('/');
   }
 
   @override
@@ -181,9 +228,10 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     )
                   else
                     NyButton(
-                      label: 'Complete Setup & Launch NYABAGAM',
-                      icon: Icons.rocket_launch_rounded,
-                      onPressed: _completeOnboarding,
+                      label: 'Verify number and continue',
+                      icon: Icons.arrow_forward_rounded,
+                      isLoading: _saving,
+                      onPressed: _saving ? null : _completeOnboarding,
                     ),
                 ],
               ),
@@ -435,9 +483,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
           const SizedBox(height: 4),
           TextField(
             controller: _nameController,
+            textCapitalization: TextCapitalization.words,
+            onChanged: (_) {
+              if (_nameError != null) setState(() => _nameError = null);
+            },
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.person_rounded, size: 18),
-              hintText: 'e.g. Vikram',
+              hintText: 'Your full name',
+              errorText: _nameError,
               border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
@@ -450,9 +503,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
           TextField(
             controller: _phoneController,
             keyboardType: TextInputType.phone,
+            onChanged: (_) {
+              if (_phoneError != null) setState(() => _phoneError = null);
+            },
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.phone_rounded, size: 18),
-              hintText: '+91 98400 12345',
+              hintText: '98400 12345',
+              helperText: 'We send a one-time code to confirm this number.',
+              errorText: _phoneError,
               border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
@@ -466,7 +524,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             controller: _cityController,
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.location_on_rounded, size: 18),
-              hintText: 'e.g. Chennai',
+              hintText: 'Your city (optional)',
               border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),

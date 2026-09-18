@@ -20,7 +20,7 @@ class NyabagamApp extends StatelessWidget {
           darkTheme: AppTheme.dark,
           themeMode: ThemeController.instance.themeMode,
           routerConfig: appRouter,
-          builder: (context, child) => AppEnvironment.current.isSupabaseConfigured
+          builder: (context, child) => AppEnvironment.current.isFirebaseConfigured
               ? AuthGate(child: child ?? const SizedBox.shrink())
               : child ?? const SizedBox.shrink(),
         );

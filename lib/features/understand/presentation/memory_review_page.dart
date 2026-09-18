@@ -8,7 +8,9 @@ import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
+import '../../../core/notifications/reminder_scheduler.dart';
 import '../../memory/data/memory_repository.dart';
+import '../../profile/presentation/user_profile_controller.dart';
 import '../../memory/domain/memory_candidate.dart';
 
 class MemoryReviewPage extends StatefulWidget {
@@ -93,6 +95,17 @@ class _MemoryReviewPageState extends State<MemoryReviewPage> {
 
     try {
       final saved = await MemoryRepositoryFactory.current.confirm(updatedCandidate);
+
+      // Schedule the alarm as part of saving. Without this a warranty date is
+      // only ever a row in a list and nothing fires when the app is closed.
+      final profile = UserProfileController.instance.profile;
+      await ReminderScheduler.instance.syncMemory(
+        saved,
+        hour: profile.reminderHour,
+        minute: profile.reminderMinute,
+        enabled: profile.is2DayAlertsEnabled,
+      );
+
       if (mounted) {
         context.go('/remember', extra: saved);
       }

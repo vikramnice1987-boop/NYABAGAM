@@ -11,14 +11,14 @@ import '../shared/components/ny_glass.dart';
 
 /// Height of the floating glass tab bar. Screens reserve clearance for it via
 /// [NySpacing.navBarClearance].
-const double kNavBarHeight = 66.0;
+const double kNavBarHeight = 68.0;
 
-/// The app shell: branch content with a floating glass tab bar over it.
+/// The app shell: branch content with a floating glass capture dock over it.
 ///
-/// The bar detaches from the bottom edge so the wallpaper and content scroll
-/// visibly beneath it — the single clearest signal that the chrome is glass
-/// and not an opaque bar. Screens reserve room for it via
-/// `NySpacing.navBarClearance`.
+/// Capture lives in the centre of the bar rather than in a separate floating
+/// action button. The old FAB overlapped the bar and could swallow taps meant
+/// for content underneath; folding it into the dock removes that collision and
+/// makes the app's primary action permanently reachable from every tab.
 class ScaffoldWithNavBar extends StatelessWidget {
   const ScaffoldWithNavBar({
     required this.navigationShell,
@@ -55,23 +55,18 @@ class ScaffoldWithNavBar extends StatelessWidget {
             // loose vertical constraints and can be squashed below its content,
             // clipping the labels.
             height: kNavBarHeight,
-            child: _GlassTabBar(
+            child: _CaptureDock(
               currentIndex: navigationShell.currentIndex,
+              items: _items,
               onSelected: (index) => navigationShell.goBranch(
                 index,
                 initialLocation: index == navigationShell.currentIndex,
               ),
-              items: _items,
+              onCapture: () => context.push('/capture'),
             ),
           ),
         ],
       ),
-      floatingActionButton: navigationShell.currentIndex == 0
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: NySpacing.space56),
-              child: _CaptureFab(onPressed: () => context.push('/capture')),
-            )
-          : null,
     );
   }
 }
@@ -83,16 +78,18 @@ class _NavItem {
   final String label;
 }
 
-class _GlassTabBar extends StatelessWidget {
-  const _GlassTabBar({
+class _CaptureDock extends StatelessWidget {
+  const _CaptureDock({
     required this.currentIndex,
-    required this.onSelected,
     required this.items,
+    required this.onSelected,
+    required this.onCapture,
   });
 
   final int currentIndex;
-  final ValueChanged<int> onSelected;
   final List<_NavItem> items;
+  final ValueChanged<int> onSelected;
+  final VoidCallback onCapture;
 
   @override
   Widget build(BuildContext context) {
@@ -100,59 +97,41 @@ class _GlassTabBar extends StatelessWidget {
       level: NyGlassLevel.floating,
       borderRadius: NyRadius.borderPill,
       padding: const EdgeInsets.symmetric(
-        horizontal: NySpacing.space6,
+        horizontal: NySpacing.space8,
         vertical: NySpacing.space6,
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final slot = constraints.maxWidth / items.length;
-          return Stack(
-            children: <Widget>[
-              // The selected pill slides between slots rather than blinking.
-              AnimatedPositioned(
-                duration: NyMotion.normal,
-                curve: NyMotion.settle,
-                left: slot * currentIndex,
-                top: 0,
-                bottom: 0,
-                width: slot,
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: NySpacing.space4),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: <Color>[
-                        NyColors.accentGradient[0].withValues(alpha: 0.85),
-                        NyColors.accentGradient[1].withValues(alpha: 0.85),
-                      ],
-                    ),
-                    borderRadius: NyRadius.borderPill,
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: NyColors.accentGradient[1].withValues(alpha: 0.42),
-                        blurRadius: 20,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Row(
-                children: <Widget>[
-                  for (int i = 0; i < items.length; i++)
-                    Expanded(
-                      child: _TabButton(
-                        item: items[i],
-                        selected: i == currentIndex,
-                        onTap: () => onSelected(i),
-                      ),
-                    ),
-                ],
-              ),
-            ],
-          );
-        },
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: _TabButton(
+              item: items[0],
+              selected: currentIndex == 0,
+              onTap: () => onSelected(0),
+            ),
+          ),
+          Expanded(
+            child: _TabButton(
+              item: items[1],
+              selected: currentIndex == 1,
+              onTap: () => onSelected(1),
+            ),
+          ),
+          _CaptureButton(onTap: onCapture),
+          Expanded(
+            child: _TabButton(
+              item: items[2],
+              selected: currentIndex == 2,
+              onTap: () => onSelected(2),
+            ),
+          ),
+          Expanded(
+            child: _TabButton(
+              item: items[3],
+              selected: currentIndex == 3,
+              onTap: () => onSelected(3),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -172,9 +151,10 @@ class _TabButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final accent = theme.colorScheme.primary;
     final color = selected
-        ? Colors.white
-        : theme.colorScheme.onSurface.withValues(alpha: 0.62);
+        ? accent
+        : theme.colorScheme.onSurface.withValues(alpha: 0.58);
 
     return Semantics(
       button: true,
@@ -188,7 +168,7 @@ class _TabButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             AnimatedScale(
-              scale: selected ? 1.08 : 1.0,
+              scale: selected ? 1.1 : 1.0,
               duration: NyMotion.fast,
               curve: NyMotion.spring,
               child: Icon(
@@ -205,6 +185,7 @@ class _TabButton extends StatelessWidget {
                 item.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
           ],
@@ -214,48 +195,63 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-/// Primary capture action. Carries the accent gradient and a pronounced glow
-/// so it stays the most prominent target on the home surface.
-class _CaptureFab extends StatelessWidget {
-  const _CaptureFab({required this.onPressed});
+/// The app's primary action, seated in the middle of the dock.
+class _CaptureButton extends StatefulWidget {
+  const _CaptureButton({required this.onTap});
 
-  final VoidCallback onPressed;
+  final VoidCallback onTap;
+
+  @override
+  State<_CaptureButton> createState() => _CaptureButtonState();
+}
+
+class _CaptureButtonState extends State<_CaptureButton> {
+  bool _pressed = false;
+
+  void _set(bool v) {
+    if (_pressed != v) setState(() => _pressed = v);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: 'Capture a memory',
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: NySpacing.space20),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: NyColors.accentGradient,
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: NySpacing.space6),
+      child: Semantics(
+        button: true,
+        label: 'Capture a memory',
+        child: GestureDetector(
+          onTapDown: (_) => _set(true),
+          onTapUp: (_) => _set(false),
+          onTapCancel: () => _set(false),
+          onTap: widget.onTap,
+          child: AnimatedScale(
+            scale: _pressed ? 0.93 : 1.0,
+            duration: NyMotion.fast,
+            curve: NyMotion.settle,
+            child: Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  colors: NyColors.accentGradient,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: NyColors.accentGradient[1].withValues(alpha: 0.50),
+                    blurRadius: 20,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.mic_rounded,
+                color: Colors.white,
+                size: 24,
+              ),
             ),
-            borderRadius: NyRadius.borderPill,
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: NyColors.accentGradient[2].withValues(alpha: 0.46),
-                blurRadius: 28,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              const Icon(Icons.mic_rounded, color: Colors.white, size: 20),
-              const SizedBox(width: NySpacing.space8),
-              Text(
-                'Capture',
-                style: NyTypography.labelLarge.copyWith(color: Colors.white),
-              ),
-            ],
           ),
         ),
       ),

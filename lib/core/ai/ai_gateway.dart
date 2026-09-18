@@ -1,23 +1,23 @@
 import '../../features/memory/domain/memory_candidate.dart';
 import '../../features/memory/domain/memory_models.dart';
 import '../config/app_environment.dart';
-import '../supabase/supabase_service.dart';
+import '../firebase/firebase_service.dart';
 
 abstract final class AiGateway {
   static Future<MemoryCandidate> understand(String content) async {
     final candidate = MemoryCandidate.fromText(content);
-    if (!AppEnvironment.current.isSupabaseConfigured) {
+    if (!AppEnvironment.current.isFirebaseConfigured ||
+        FirebaseService.auth.currentUser == null) {
       return _localUnderstand(content, candidate);
     }
 
     try {
-      final response = await SupabaseService.client.functions.invoke(
-        AppEnvironment.current.aiFunctionName,
-        body: {
+      final response = await FirebaseService.functions
+          .httpsCallable(AppEnvironment.current.firebaseAiFunctionName)
+          .call(<String, dynamic>{
           'operation': 'understand',
           'content': content,
-        },
-      );
+        });
 
       final data = Map<String, dynamic>.from(response.data as Map);
       if (data.containsKey('result')) {
@@ -30,19 +30,19 @@ abstract final class AiGateway {
   }
 
   static Future<AskResult> ask(String query, List<Map<String, dynamic>> evidence) async {
-    if (!AppEnvironment.current.isSupabaseConfigured) {
+    if (!AppEnvironment.current.isFirebaseConfigured ||
+        FirebaseService.auth.currentUser == null) {
       return _localAsk(query, evidence);
     }
 
     try {
-      final response = await SupabaseService.client.functions.invoke(
-        AppEnvironment.current.aiFunctionName,
-        body: {
+      final response = await FirebaseService.functions
+          .httpsCallable(AppEnvironment.current.firebaseAiFunctionName)
+          .call(<String, dynamic>{
           'operation': 'ask',
           'query': query,
           'evidence': evidence,
-        },
-      );
+        });
 
       final data = Map<String, dynamic>.from(response.data as Map);
       if (data.containsKey('result')) {
@@ -58,19 +58,19 @@ abstract final class AiGateway {
     String statement,
     List<Map<String, dynamic>> evidence,
   ) async {
-    if (!AppEnvironment.current.isSupabaseConfigured) {
+    if (!AppEnvironment.current.isFirebaseConfigured ||
+        FirebaseService.auth.currentUser == null) {
       return _localContextBridge(statement, evidence);
     }
 
     try {
-      final response = await SupabaseService.client.functions.invoke(
-        AppEnvironment.current.aiFunctionName,
-        body: {
+      final response = await FirebaseService.functions
+          .httpsCallable(AppEnvironment.current.firebaseAiFunctionName)
+          .call(<String, dynamic>{
           'operation': 'context',
           'statement': statement,
           'evidence': evidence,
-        },
-      );
+        });
 
       final data = Map<String, dynamic>.from(response.data as Map);
       if (data.containsKey('result')) {

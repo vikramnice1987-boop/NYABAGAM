@@ -4,8 +4,8 @@ import '../domain/memory_candidate.dart';
 import '../domain/memory_models.dart';
 import '../../../core/ai/ai_gateway.dart';
 import '../../../core/config/app_environment.dart';
-import '../../../core/supabase/supabase_service.dart';
-import 'supabase_memory_repository.dart';
+import '../../../core/firebase/firebase_service.dart';
+import 'firebase_memory_repository.dart';
 
 abstract interface class MemoryRepository {
   Future<MemoryModel> confirm(MemoryCandidate candidate);
@@ -183,9 +183,13 @@ final _localMemoryRepository = InMemoryMemoryRepository();
 
 abstract final class MemoryRepositoryFactory {
   static MemoryRepository get current {
-    if (AppEnvironment.current.isSupabaseConfigured &&
-        SupabaseService.client.auth.currentUser != null) {
-      return SupabaseMemoryRepository(SupabaseService.client);
+    if (AppEnvironment.current.isFirebaseConfigured &&
+        FirebaseService.auth.currentUser != null) {
+      return FirebaseMemoryRepository(
+        firestore: FirebaseService.firestore,
+        storage: FirebaseService.storage,
+        userId: FirebaseService.auth.currentUser!.uid,
+      );
     }
     return _localMemoryRepository;
   }

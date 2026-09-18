@@ -665,7 +665,7 @@ class _MemoryCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (memory.attachmentBase64 != null)
+              if (memory.attachmentBase64 != null || memory.attachmentUrl != null)
                 Padding(
                   padding: const EdgeInsets.only(left: NySpacing.space6),
                   child: Icon(

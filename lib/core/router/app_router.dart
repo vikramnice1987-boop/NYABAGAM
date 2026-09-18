@@ -14,7 +14,11 @@ import '../../features/actions/presentation/action_approval_page.dart';
 import '../../features/outcomes/presentation/outcome_record_page.dart';
 import '../../features/reminders/presentation/reminders_page.dart';
 import '../../features/onboarding/presentation/onboarding_page.dart';
+import '../../features/splash/presentation/splash_page.dart';
+import '../../features/profile/presentation/user_profile_controller.dart';
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/auth/presentation/sign_in_page.dart';
+import '../../features/auth/presentation/otp_verification_page.dart';
 import '../../features/memory/domain/memory_candidate.dart';
 import '../../features/memory/domain/memory_models.dart';
 
@@ -26,8 +30,30 @@ final _profileNavigatorKey = GlobalKey<NavigatorState>();
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: '/',
+  initialLocation: '/splash',
+
+  redirect: (context, state) {
+    final loc = state.matchedLocation;
+    if (loc == '/splash') return null;
+
+    final isAuth = AuthController.instance.isAuthenticated;
+    final isDone = UserProfileController.instance.isOnboardingCompleted;
+
+    if (!isDone && !isAuth && loc != '/sign-in' && loc != '/onboarding' && !loc.startsWith('/otp-verify')) {
+      return '/sign-in';
+    }
+    if ((isDone || isAuth) && (loc == '/sign-in' || loc == '/onboarding')) {
+      return '/';
+    }
+    return null;
+  },
+
   routes: [
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/splash',
+      builder: (context, state) => const SplashPage(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) {
         return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -84,6 +110,14 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       path: '/sign-in',
       builder: (context, state) => const SignInPage(),
+    ),
+    GoRoute(
+      parentNavigatorKey: _rootNavigatorKey,
+      path: '/otp-verify',
+      builder: (context, state) {
+        final destination = state.extra as String? ?? 'user@gmail.com';
+        return OtpVerificationPage(destination: destination);
+      },
     ),
     GoRoute(
       parentNavigatorKey: _rootNavigatorKey,

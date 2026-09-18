@@ -5,6 +5,19 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
+    <!-- Reminders -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--
+      SCHEDULE_EXACT_ALARM is user-grantable and is what makes a reminder fire
+      at the minute it was set for. USE_EXACT_ALARM is deliberately NOT declared:
+      Play Store restricts it to alarm/clock apps and would reject this listing.
+      If the user declines, scheduling falls back to an inexact alarm.
+    -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Lets alarms fire while the device is in Doze. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:label="NYABAGAM"
         android:name="${applicationName}"
@@ -30,8 +43,38 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!--
+          Re-registers scheduled reminders after a reboot. Android drops all
+          pending alarms on restart, so without this every warranty reminder is
+          silently lost the first time the phone is switched off.
+        -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false" />
     </application>
     <queries>
+        <!--
+          Required on Android 11+ (API 30). Without these, package visibility
+          rules hide the system speech recogniser from the app and
+          SpeechToText.initialize() reports "unavailable", so voice capture
+          silently does nothing.
+        -->
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
+        </intent>
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH"/>
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>

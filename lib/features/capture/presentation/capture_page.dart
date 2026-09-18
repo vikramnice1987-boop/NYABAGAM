@@ -139,36 +139,50 @@ class _CapturePageState extends State<CapturePage> {
     return dedup.join(' ');
   }
 
-  void _toggleVoiceRecording() {
+  Future<void> _toggleVoiceRecording() async {
     if (_isRecording) {
       SpeechService.instance.stopListening();
       setState(() {
         _isRecording = false;
         _liveSpeechStatus = 'Recording finished. Review or edit text below.';
       });
-    } else {
+      return;
+    }
+
+    setState(() {
+      _isRecording = true;
+      _liveSpeechStatus = 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}... Speak clearly now.';
+    });
+
+    final started = await SpeechService.instance.startListening(
+      language: _selectedLanguageCode,
+      onResult: (transcript, isFinal) {
+        if (mounted && transcript.isNotEmpty) {
+          setState(() {
+            _textController.text = _deduplicatePhrases(transcript);
+          });
+        }
+      },
+      onDone: () {
+        if (mounted) {
+          setState(() {
+            _isRecording = false;
+            _liveSpeechStatus = 'Tap microphone to speak again';
+          });
+        }
+      },
+    );
+
+    // Without this the UI would sit on "Listening..." forever whenever the
+    // recogniser is missing or microphone permission was denied.
+    if (!started && mounted) {
+      final reason = SpeechService.instance.lastError;
       setState(() {
-        _isRecording = true;
-        _liveSpeechStatus = 'Listening in ${_getLanguageLabel(_selectedLanguageCode)}... Speak clearly now.';
+        _isRecording = false;
+        _liveSpeechStatus = reason == null
+            ? 'Voice input unavailable. Check microphone permission, or type your note instead.'
+            : 'Voice input unavailable: $reason';
       });
-      SpeechService.instance.startListening(
-        language: _selectedLanguageCode,
-        onResult: (transcript, isFinal) {
-          if (mounted && transcript.isNotEmpty) {
-            setState(() {
-              _textController.text = _deduplicatePhrases(transcript);
-            });
-          }
-        },
-        onDone: () {
-          if (mounted) {
-            setState(() {
-              _isRecording = false;
-              _liveSpeechStatus = 'Tap microphone to speak again';
-            });
-          }
-        },
-      );
     }
   }
 

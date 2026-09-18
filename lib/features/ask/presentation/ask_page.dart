@@ -72,7 +72,7 @@ class _AskPageState extends State<AskPage> {
     return dedup.join(' ');
   }
 
-  void _toggleVoiceSearch() {
+  Future<void> _toggleVoiceSearch() async {
     if (_isListening) {
       SpeechService.instance.stopListening();
       setState(() {
@@ -87,7 +87,7 @@ class _AskPageState extends State<AskPage> {
         _isListening = true;
         _voiceStatus = 'Listening in ${_getLanguageLabel(_selectedLang)}... Ask your question now.';
       });
-      SpeechService.instance.startListening(
+      final started = await SpeechService.instance.startListening(
         language: _selectedLang,
         onResult: (transcript, isFinal) {
           if (mounted && transcript.isNotEmpty) {
@@ -109,6 +109,16 @@ class _AskPageState extends State<AskPage> {
           }
         },
       );
+
+      // Otherwise the banner would stay on "Listening..." indefinitely when
+      // the recogniser is unavailable or permission was refused.
+      if (!started && mounted) {
+        setState(() {
+          _isListening = false;
+          _voiceStatus =
+              'Voice input unavailable. Check microphone permission, or type your question.';
+        });
+      }
     }
   }
 

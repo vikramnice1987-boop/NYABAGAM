@@ -51,5 +51,7 @@
 	<string>NYABAGAM needs photo library access to attach documents and receipts to your memories.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>NYABAGAM needs microphone access to record voice notes for memory capture.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>NYABAGAM transcribes your spoken notes into text so they can be saved as memories.</string>
 </dict>
 </plist>

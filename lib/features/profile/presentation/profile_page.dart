@@ -8,6 +8,11 @@ import '../../../core/theme/theme_controller.dart';
 import '../../../shared/components/ny_scaffold.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_chip_bar.dart';
+import '../../../core/notifications/notification_service.dart';
+import '../../../core/theme/ny_elevation.dart';
+import '../../../core/theme/ny_typography.dart';
+import '../../auth/presentation/otp_verification_page.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../presentation/user_profile_controller.dart';
 
 class AvatarOption {
@@ -26,6 +31,83 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  /// Re-runs OTP for the stored number.
+  Future<void> _verifyPhone(String phone) async {
+    if (phone.isEmpty) return;
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => OtpVerificationPage(phoneE164: phone),
+      ),
+    );
+    if (verified == null || !mounted) return;
+
+    await UserProfileController.instance.updateProfile(isPhoneVerified: verified);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          verified
+              ? 'Phone verified.'
+              : 'Code accepted locally, but the number stays unverified until a backend is connected.',
+        ),
+      ),
+    );
+  }
+
+  /// Enabling alerts is meaningless without the OS permission, so ask for it
+  /// at the moment the user opts in rather than failing silently later.
+  Future<void> _onAlertsToggled(bool enabled) async {
+    if (enabled) {
+      final granted = await NotificationService.instance.requestPermissions();
+      if (!granted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Notifications are blocked for NYABAGAM. Enable them in Android settings for reminders to arrive.',
+            ),
+          ),
+        );
+      }
+      await NotificationService.instance.requestExactAlarmPermission();
+    }
+
+    await UserProfileController.instance
+        .updateProfile(is2DayAlertsEnabled: enabled);
+
+    if (!mounted) return;
+    if (enabled && NotificationService.instance.usesInexactFallback) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Exact alarms are off, so reminders may arrive a few minutes late.',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _pickReminderTime(TimeOfDay current) async {
+    final picked = await showTimePicker(context: context, initialTime: current);
+    if (picked == null || !mounted) return;
+
+    final count = await UserProfileController.instance.updateProfile(
+      reminderHour: picked.hour,
+      reminderMinute: picked.minute,
+    ).then((_) => UserProfileController.instance.rescheduleReminders());
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          count == 0
+              ? 'Reminder time saved. Nothing is scheduled yet - add a warranty date to a memory.'
+              : 'Reminder time saved. $count reminder(s) rescheduled.',
+        ),
+      ),
+    );
+  }
+
   static const List<AvatarOption> _avatars = [
     AvatarOption('user', Icons.person_rounded, 'User', NyColors.accentLight),
     AvatarOption('tech', Icons.engineering_rounded, 'Tech', NyColors.entityPerson),
@@ -192,57 +274,81 @@ class _ProfilePageState extends State<ProfilePage> {
             children: [
               // 1. User Profile Header Card
               NyCard(
+                level: NyGlassLevel.floating,
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        // Avatar Icon
+                        // Initials avatar, falling back to the chosen icon
+                        // before a name exists.
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          width: 62,
+                          height: 62,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            color: profile.avatarColor.withAlpha(35),
                             shape: BoxShape.circle,
-                            border: Border.all(color: profile.avatarColor.withAlpha(120), width: 2),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                profile.avatarColor.withValues(alpha: 0.34),
+                                profile.avatarColor.withValues(alpha: 0.10),
+                              ],
+                            ),
+                            border: Border.all(
+                              color: profile.avatarColor.withValues(alpha: 0.5),
+                              width: 1.5,
+                            ),
                           ),
-                          child: Icon(profile.avatarIcon, size: 32, color: profile.avatarColor),
+                          child: profile.initials.isEmpty
+                              ? Icon(profile.avatarIcon, size: 28, color: profile.avatarColor)
+                              : Text(
+                                  profile.initials,
+                                  style: NyTypography.headlineMedium.copyWith(
+                                    color: profile.avatarColor,
+                                  ),
+                                ),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: NySpacing.space14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      profile.name,
-                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: NyColors.statusSuccess.withAlpha(30),
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: const Text('Active', style: TextStyle(fontSize: 10, color: NyColors.statusSuccess, fontWeight: FontWeight.w800)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 2),
                               Text(
-                                profile.phone,
+                                profile.hasProfile ? profile.name : 'Set up your profile',
+                                style: NyTypography.headlineSmall.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withAlpha(180), fontWeight: FontWeight.w600),
                               ),
-                              Text(
-                                '${profile.city} | ${profile.email}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(140)),
+                              if (profile.phone.isNotEmpty) ...[
+                                const SizedBox(height: NySpacing.space4),
+                                Text(
+                                  profile.phone,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: NyTypography.numeric.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                              if (profile.city.isNotEmpty) ...[
+                                const SizedBox(height: NySpacing.space2),
+                                Text(
+                                  profile.city,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: NyTypography.bodySmall.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: NySpacing.space8),
+                              _VerificationChip(
+                                verified: profile.isPhoneVerified,
+                                hasPhone: profile.phone.isNotEmpty,
+                                onVerify: () => _verifyPhone(profile.phone),
                               ),
                             ],
                           ),
@@ -349,10 +455,35 @@ class _ProfilePageState extends State<ProfilePage> {
                       contentPadding: EdgeInsets.zero,
                       secondary: const Icon(Icons.alarm_on_rounded, color: NyColors.statusError),
                       title: const Text('2-Day Early Warranty Alerts', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                      subtitle: const Text('Proactively show alerts before machine warranties expire.', style: TextStyle(fontSize: 11)),
+                      subtitle: const Text('Notifies you two days before a warranty or service date.', style: TextStyle(fontSize: 11)),
                       value: profile.is2DayAlertsEnabled,
                       activeTrackColor: NyColors.accentGradient[0],
-                      onChanged: (val) => UserProfileController.instance.updateProfile(is2DayAlertsEnabled: val),
+                      onChanged: _onAlertsToggled,
+                    ),
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      enabled: profile.is2DayAlertsEnabled,
+                      leading: Icon(
+                        Icons.schedule_rounded,
+                        color: profile.is2DayAlertsEnabled
+                            ? theme.colorScheme.secondary
+                            : theme.colorScheme.onSurfaceVariant,
+                      ),
+                      title: const Text('Reminder time', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: Text(
+                        'Alerts arrive at ${profile.reminderTime.format(context)}.',
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                      trailing: Text(
+                        profile.reminderTime.format(context),
+                        style: NyTypography.numeric.copyWith(
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      onTap: profile.is2DayAlertsEnabled
+                          ? () => _pickReminderTime(profile.reminderTime)
+                          : null,
                     ),
                     const Divider(),
                     SwitchListTile(
@@ -452,6 +583,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Divider(),
                     ListTile(
                       contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.logout_rounded, color: NyColors.accentLight),
+                      title: const Text('Sign Out / Switch Gmail Account', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                      subtitle: const Text('Sign out and return to the Gmail Sign-In / OTP screen.', style: TextStyle(fontSize: 11)),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                      onTap: () async {
+                        await AuthController.instance.signOut();
+                        if (context.mounted) {
+                          context.go('/sign-in');
+                        }
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
                       leading: const Icon(Icons.delete_forever_rounded, color: NyColors.statusError),
                       title: const Text('Reset All Local Data', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: NyColors.statusError)),
                       subtitle: const Text('Clear local memory database and restart setup.', style: TextStyle(fontSize: 11)),
@@ -489,6 +634,58 @@ class _ProfilePageState extends State<ProfilePage> {
             ],
           );
         },
+      ),
+    );
+  }
+}
+/// Shows whether the stored number has actually been proven.
+///
+/// The offline dev OTP flow never sets verified, so this deliberately reads
+/// "Not verified" rather than implying a security guarantee that does not exist.
+class _VerificationChip extends StatelessWidget {
+  const _VerificationChip({
+    required this.verified,
+    required this.hasPhone,
+    required this.onVerify,
+  });
+
+  final bool verified;
+  final bool hasPhone;
+  final VoidCallback onVerify;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!hasPhone) return const SizedBox.shrink();
+
+    final color = verified ? NyColors.statusSuccess : NyColors.statusWarning;
+
+    return GestureDetector(
+      onTap: verified ? null : onVerify,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: NySpacing.space10,
+          vertical: NySpacing.space4,
+        ),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: NyRadius.borderPill,
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              verified ? Icons.verified_rounded : Icons.error_outline_rounded,
+              size: 13,
+              color: color,
+            ),
+            const SizedBox(width: NySpacing.space6),
+            Text(
+              verified ? 'Verified' : 'Not verified - tap to verify',
+              style: NyTypography.labelSmall.copyWith(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }

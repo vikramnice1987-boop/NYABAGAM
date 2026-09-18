@@ -1,143 +1,258 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/config/app_environment.dart';
-import '../../../core/supabase/supabase_service.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../core/config/app_environment.dart';
+import '../../../core/firebase/firebase_service.dart';
+import '../data/gmail_otp_service.dart';
+import '../data/phone_auth_service.dart';
+
+/// Authentication state for Firebase Authentication.
+///
+/// Google is the primary sign-in route. Email is intentionally implemented as
+/// a Firebase email-link flow, rather than pretending an email link is a
+/// numeric OTP. A Gmail mailbox is not an authentication provider by itself.
 class AuthController extends ChangeNotifier {
   AuthController._();
   static final AuthController instance = AuthController._();
 
+  static const _emailForLinkKey = 'nyabagam_email_for_sign_in_link';
+  static const _storedEmailKey = 'nyabagam_auth_email';
+
   User? _currentUser;
-  Session? _currentSession;
+  String? _currentEmail;
+  bool _isAuthenticatedManually = false;
   bool _isLoading = false;
   String? _errorMessage;
   bool _isMagicLinkSent = false;
-  StreamSubscription<AuthState>? _authSubscription;
+  StreamSubscription<User?>? _authSubscription;
 
   User? get currentUser => _currentUser;
-  Session? get currentSession => _currentSession;
-  bool get isAuthenticated => _currentSession != null || !AppEnvironment.current.isSupabaseConfigured;
-  bool get isSupabaseConfigured => AppEnvironment.current.isSupabaseConfigured;
+  String? get currentEmail => _currentUser?.email ?? _currentEmail;
+
+  /// Compatibility surface for callers that only need a session identifier.
+  String? get currentSession => _currentUser?.uid ?? (_currentEmail != null ? 'local_$_currentEmail' : null);
+
+  bool get isAuthenticated => _currentUser != null || _isAuthenticatedManually;
+  bool get isFirebaseConfigured => AppEnvironment.current.isFirebaseConfigured;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isMagicLinkSent => _isMagicLinkSent;
 
   Future<void> init() async {
-    if (!AppEnvironment.current.isSupabaseConfigured) {
+    final preferences = await SharedPreferences.getInstance();
+    _currentEmail = preferences.getString(_storedEmailKey);
+    if (_currentEmail != null && _currentEmail!.isNotEmpty) {
+      _isAuthenticatedManually = true;
+    }
+
+    if (!isFirebaseConfigured) {
       notifyListeners();
       return;
     }
 
     try {
-      final client = SupabaseService.client;
-      _currentSession = client.auth.currentSession;
-      _currentUser = client.auth.currentUser;
-
-      _authSubscription?.cancel();
-      _authSubscription = client.auth.onAuthStateChange.listen((data) {
-        _currentSession = data.session;
-        _currentUser = data.session?.user;
-        notifyListeners();
-      }, onError: (err) {
-        _errorMessage = _translateError(err);
-        notifyListeners();
-      });
-    } catch (_) {
-      // Graceful fallback for offline / unconfigured
+      _currentUser = FirebaseService.auth.currentUser;
+      await _authSubscription?.cancel();
+      _authSubscription = FirebaseService.auth.authStateChanges().listen(
+        (user) {
+          _currentUser = user;
+          notifyListeners();
+        },
+        onError: (Object error) {
+          _errorMessage = _translateError(error);
+          notifyListeners();
+        },
+      );
+    } catch (error) {
+      _errorMessage = _translateError(error);
     }
     notifyListeners();
   }
 
+  Future<bool> signInWithGoogle() async {
+    if (!isFirebaseConfigured) return true;
+    _beginRequest();
+
+    try {
+      if (kIsWeb) {
+        await FirebaseService.auth.signInWithPopup(GoogleAuthProvider());
+      } else {
+        final account = await GoogleSignIn(scopes: const <String>['email'])
+            .signIn();
+        if (account == null) {
+          _finishRequest();
+          return false;
+        }
+        final authentication = await account.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: authentication.accessToken,
+          idToken: authentication.idToken,
+        );
+        await FirebaseService.auth.signInWithCredential(credential);
+      }
+      _finishRequest();
+      return true;
+    } catch (error) {
+      _finishRequest(error);
+      return false;
+    }
+  }
+
   Future<bool> sendMagicLink(String email) async {
     final cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail.isEmpty || !cleanEmail.contains('@') || !cleanEmail.contains('.')) {
+    if (!_isValidEmail(cleanEmail)) {
       _errorMessage = 'Please enter a valid email address.';
       notifyListeners();
       return false;
     }
 
-    _isLoading = true;
-    _errorMessage = null;
-    _isMagicLinkSent = false;
-    notifyListeners();
-
+    _beginRequest();
     try {
-      if (!AppEnvironment.current.isSupabaseConfigured) {
-        // Local simulation for offline/dev
-        await Future.delayed(const Duration(milliseconds: 500));
+      if (!isFirebaseConfigured) {
         _isMagicLinkSent = true;
-        _isLoading = false;
-        notifyListeners();
+        _finishRequest();
         return true;
       }
-
-      await SupabaseService.client.auth.signInWithOtp(
+      final continueUrl = AppEnvironment.current.firebaseEmailLinkUrl;
+      if (continueUrl.isEmpty) {
+        throw StateError(
+          'Email link is not configured. Set FIREBASE_EMAIL_LINK_URL first.',
+        );
+      }
+      await FirebaseService.auth.sendSignInLinkToEmail(
         email: cleanEmail,
-        emailRedirectTo: kIsWeb ? null : 'nyabagam://auth-callback',
+        actionCodeSettings: ActionCodeSettings(
+          url: continueUrl,
+          handleCodeInApp: true,
+          androidPackageName: 'com.nyabagam.nyabagam',
+          androidInstallApp: true,
+          iOSBundleId: 'com.nyabagam.nyabagam',
+        ),
       );
+      final preferences = await SharedPreferences.getInstance();
+      await preferences.setString(_emailForLinkKey, cleanEmail);
       _isMagicLinkSent = true;
-      _isLoading = false;
-      notifyListeners();
+      _finishRequest();
       return true;
-    } catch (e) {
-      _errorMessage = _translateError(e);
-      _isLoading = false;
-      notifyListeners();
+    } catch (error) {
+      _finishRequest(error);
       return false;
     }
   }
 
-  Future<bool> verifyOtp({required String email, required String token}) async {
-    final cleanEmail = email.trim().toLowerCase();
-    final cleanToken = token.trim();
-    if (cleanToken.length < 6) {
-      _errorMessage = 'Please enter a valid 6-digit verification code.';
-      notifyListeners();
+  /// Completes email-link sign-in after the platform delivers the deep link.
+  Future<bool> completeEmailLink(String emailLink) async {
+    if (!isFirebaseConfigured ||
+        !FirebaseService.auth.isSignInWithEmailLink(emailLink)) {
       return false;
     }
-
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
+    _beginRequest();
     try {
-      if (!AppEnvironment.current.isSupabaseConfigured) {
-        await Future.delayed(const Duration(milliseconds: 500));
-        _isLoading = false;
-        notifyListeners();
-        return true;
+      final preferences = await SharedPreferences.getInstance();
+      final email = preferences.getString(_emailForLinkKey);
+      if (email == null || email.isEmpty) {
+        throw StateError(
+          'Open this link on the same device where you requested sign-in.',
+        );
       }
-
-      final res = await SupabaseService.client.auth.verifyOTP(
-        email: cleanEmail,
-        token: cleanToken,
-        type: OtpType.magiclink,
+      await FirebaseService.auth.signInWithEmailLink(
+        email: email,
+        emailLink: emailLink,
       );
-      _currentSession = res.session;
-      _currentUser = res.user;
-      _isLoading = false;
-      notifyListeners();
-      return res.session != null;
-    } catch (e) {
-      _errorMessage = _translateError(e);
-      _isLoading = false;
-      notifyListeners();
+      await preferences.remove(_emailForLinkKey);
+      _isMagicLinkSent = false;
+      _finishRequest();
+      return true;
+    } catch (error) {
+      _finishRequest(error);
       return false;
     }
+  }
+
+  /// Sends a 6-digit OTP code to the provided Gmail address.
+  Future<OtpResult> sendGmailOtp(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (!_isValidEmail(cleanEmail)) {
+      _errorMessage = 'Please enter a valid Gmail address.';
+      notifyListeners();
+      return const OtpResult.failure('Please enter a valid Gmail address.');
+    }
+
+    _beginRequest();
+    try {
+      final res = await GmailOtpService.instance.sendOtp(cleanEmail);
+      _finishRequest();
+      if (!res.success) {
+        _errorMessage = res.message;
+        notifyListeners();
+      }
+      return res;
+    } catch (error) {
+      _finishRequest(error);
+      return OtpResult.failure(_translateError(error));
+    }
+  }
+
+  /// Verifies a 6-digit OTP code and signs in the user.
+  Future<OtpResult> verifyGmailOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final cleanOtp = otp.trim();
+
+    _beginRequest();
+    try {
+      final res = await GmailOtpService.instance.verifyOtp(cleanEmail, cleanOtp);
+      if (res.success) {
+        _currentEmail = cleanEmail;
+        _isAuthenticatedManually = true;
+        final preferences = await SharedPreferences.getInstance();
+        await preferences.setString(_storedEmailKey, cleanEmail);
+      }
+      _finishRequest();
+      if (!res.success) {
+        _errorMessage = res.message;
+        notifyListeners();
+      }
+      return res;
+    } catch (error) {
+      _finishRequest(error);
+      return OtpResult.failure(_translateError(error));
+    }
+  }
+
+  /// Sets guest session for immediate local exploration.
+  Future<void> setGuestSession() async {
+    _isAuthenticatedManually = true;
+    _currentEmail = 'guest@nyabagam.app';
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_storedEmailKey, _currentEmail!);
+    notifyListeners();
   }
 
   Future<void> signOut() async {
     _isLoading = true;
     notifyListeners();
     try {
-      if (AppEnvironment.current.isSupabaseConfigured) {
-        await SupabaseService.client.auth.signOut();
+      if (isFirebaseConfigured) {
+        await FirebaseService.auth.signOut();
+        if (!kIsWeb) await GoogleSignIn().signOut();
       }
-    } catch (_) {}
-    _currentSession = null;
+    } catch (_) {
+      // Clear local state even when the network is unavailable.
+    }
     _currentUser = null;
+    _currentEmail = null;
+    _isAuthenticatedManually = false;
     _isMagicLinkSent = false;
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_storedEmailKey);
+    await preferences.remove(_emailForLinkKey);
     _isLoading = false;
     notifyListeners();
   }
@@ -147,24 +262,39 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _translateError(dynamic error) {
-    if (error is AuthException) {
-      if (error.message.toLowerCase().contains('rate limit')) {
-        return 'Too many login attempts. Please wait a minute and try again.';
-      }
-      if (error.message.toLowerCase().contains('invalid email')) {
-        return 'Please enter a valid email address.';
-      }
-      if (error.message.toLowerCase().contains('network') || error.message.toLowerCase().contains('failed host lookup')) {
-        return 'Network connection issue. Please check your internet.';
-      }
-      return error.message;
+  void _beginRequest() {
+    _isLoading = true;
+    _errorMessage = null;
+    _isMagicLinkSent = false;
+    notifyListeners();
+  }
+
+  void _finishRequest([Object? error]) {
+    _isLoading = false;
+    if (error != null) _errorMessage = _translateError(error);
+    notifyListeners();
+  }
+
+  bool _isValidEmail(String value) =>
+      value.contains('@') && value.substring(value.indexOf('@')).contains('.');
+
+  String _translateError(Object error) {
+    final message = error is FirebaseAuthException
+        ? error.message ?? error.code
+        : error.toString();
+    final normalized = message.toLowerCase();
+    if (normalized.contains('rate') || normalized.contains('too-many')) {
+      return 'Too many login attempts. Please wait a minute and try again.';
     }
-    final str = error.toString().toLowerCase();
-    if (str.contains('network') || str.contains('socketexception') || str.contains('failed host lookup')) {
+    if (normalized.contains('email') && normalized.contains('invalid')) {
+      return 'Please enter a valid email address.';
+    }
+    if (normalized.contains('network') ||
+        normalized.contains('socket') ||
+        normalized.contains('failed host lookup')) {
       return 'Network connection issue. Please check your internet.';
     }
-    return 'Authentication error. Please try again.';
+    return message;
   }
 
   @override

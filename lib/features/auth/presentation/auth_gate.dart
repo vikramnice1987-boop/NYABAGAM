@@ -31,7 +31,7 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    if (_auth.isSupabaseConfigured && !_auth.isAuthenticated) {
+    if (_auth.isFirebaseConfigured && !_auth.isAuthenticated) {
       return const SignInPage();
     }
     return widget.child;

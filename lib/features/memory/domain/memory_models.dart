@@ -16,6 +16,8 @@ class MemoryModel {
     this.attachmentBase64,
     this.attachmentName,
     this.attachmentType,
+    this.attachmentUrl,
+    this.attachmentStoragePath,
     this.contactPhone,
     this.warrantyExpiresAt,
     this.serviceDueAt,
@@ -38,6 +40,8 @@ class MemoryModel {
   final String? attachmentBase64;
   final String? attachmentName;
   final String? attachmentType;
+  final String? attachmentUrl;
+  final String? attachmentStoragePath;
   final String? contactPhone;
   final DateTime? warrantyExpiresAt;
   final DateTime? serviceDueAt;
@@ -96,6 +100,8 @@ class MemoryModel {
       attachmentBase64: meta['attachment_base64'] as String?,
       attachmentName: meta['attachment_name'] as String?,
       attachmentType: meta['attachment_type'] as String?,
+      attachmentUrl: meta['attachment_url'] as String?,
+      attachmentStoragePath: meta['attachment_storage_path'] as String?,
       contactPhone: meta['contact_phone'] as String?,
       warrantyExpiresAt: meta['warranty_expires_at'] != null ? DateTime.tryParse(meta['warranty_expires_at'] as String) : null,
       serviceDueAt: meta['service_due_at'] != null ? DateTime.tryParse(meta['service_due_at'] as String) : null,
@@ -121,6 +127,8 @@ class MemoryModel {
       'attachment_base64': attachmentBase64,
       'attachment_name': attachmentName,
       'attachment_type': attachmentType,
+      'attachment_url': attachmentUrl,
+      'attachment_storage_path': attachmentStoragePath,
       'contact_phone': contactPhone,
       'warranty_expires_at': warrantyExpiresAt?.toIso8601String(),
       'service_due_at': serviceDueAt?.toIso8601String(),

@@ -12,9 +12,9 @@ void main() {
     });
 
     test('AppEnvironment contains zero hardcoded default credentials or API keys', () {
-      expect(AppEnvironment.current.supabaseUrl, isEmpty);
-      expect(AppEnvironment.current.supabaseAnonKey, isEmpty);
-      expect(AppEnvironment.current.isSupabaseConfigured, isFalse);
+      expect(AppEnvironment.current.firebaseApiKey, isEmpty);
+      expect(AppEnvironment.current.firebaseProjectId, isEmpty);
+      expect(AppEnvironment.current.isFirebaseConfigured, isFalse);
     });
 
     test('NyAnalytics redacts passwords, tokens, phone numbers and card details', () async {
@@ -50,7 +50,11 @@ void main() {
       expect(prefs.getString('nyabagam_user_profile'), isNull);
       expect(prefs.getBool('nyabagam_onboarding_complete'), isNull);
       expect(prefs.getStringList('nyabagam_local_memories'), isNull);
-      expect(ctrl.profile.name, equals('Vikram')); // Reset to default clean state
+      // A cleared profile is empty. This previously asserted 'Vikram', which
+      // encoded the demo-data defaults as the expected clean state.
+      expect(ctrl.profile.name, isEmpty);
+      expect(ctrl.profile.phone, isEmpty);
+      expect(ctrl.profile.isOnboardingCompleted, isFalse);
     });
   });
 }

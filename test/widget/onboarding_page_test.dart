@@ -34,7 +34,7 @@ void main() {
       expect(find.text('Create Your Profile'), findsOneWidget);
       expect(find.text('Full Name:'), findsOneWidget);
       expect(find.text('WhatsApp Phone Number:'), findsOneWidget);
-      expect(find.text('Complete Setup & Launch NYABAGAM'), findsOneWidget);
+      expect(find.text('Verify number and continue'), findsOneWidget);
     });
   });
 }

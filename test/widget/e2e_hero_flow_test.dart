@@ -6,7 +6,13 @@ import 'package:nyabagam/app/app.dart';
 void main() {
   group('Flagship AC / Ravi End-to-End Acceptance Journey', () {
     setUp(() {
-      SharedPreferences.setMockInitialValues({});
+      // The app now gates on onboarding, so a blank profile would land this
+      // test on the setup flow instead of Home. Seed a completed profile.
+      SharedPreferences.setMockInitialValues({
+        'nyabagam_user_profile':
+            '{"name":"Test User","phone":"+919840012345","city":"Chennai",'
+            '"is_onboarding_completed":true,"is_phone_verified":true}',
+      });
     });
 
     testWidgets('full lifecycle: Capture -> Understand -> Remember -> Ask -> Context -> Action -> Outcome', (tester) async {
@@ -16,6 +22,10 @@ void main() {
 
       // 1. Launch App
       await tester.pumpWidget(const NyabagamApp());
+      // Let the splash finish its async startup, then advance past the hold
+      // timer so it routes on to Home.
+      await tester.pumpAndSettle();
+      await tester.pump(const Duration(seconds: 2));
       await tester.pumpAndSettle();
 
       // Verify Home Screen

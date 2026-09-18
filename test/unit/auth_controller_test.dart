@@ -1,7 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:nyabagam/features/auth/presentation/auth_controller.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   group('AuthController Unit Tests', () {
     test('initial state validates unconfigured or local state', () async {
       final auth = AuthController.instance;
@@ -22,12 +29,24 @@ void main() {
       expect(auth.errorMessage, isNull);
     });
 
-    test('validates 6-digit OTP format before verification', () async {
+    test('sends and verifies Gmail OTP in local test environment', () async {
       final auth = AuthController.instance;
 
-      final shortOtpResult = await auth.verifyOtp(email: 'test@example.com', token: '123');
-      expect(shortOtpResult, isFalse);
-      expect(auth.errorMessage, equals('Please enter a valid 6-digit verification code.'));
+      final invalidResult = await auth.sendGmailOtp('invalid-email');
+      expect(invalidResult.success, isFalse);
+
+      final sendResult = await auth.sendGmailOtp('vikram@gmail.com');
+      expect(sendResult.success, isTrue);
+      expect(sendResult.devCode, isNotNull);
+
+      final devCode = sendResult.devCode!;
+      final verifyResult = await auth.verifyGmailOtp(
+        email: 'vikram@gmail.com',
+        otp: devCode,
+      );
+      expect(verifyResult.success, isTrue);
+      expect(auth.isAuthenticated, isTrue);
+      expect(auth.currentEmail, equals('vikram@gmail.com'));
     });
 
     test('handles sign out cleanly', () async {

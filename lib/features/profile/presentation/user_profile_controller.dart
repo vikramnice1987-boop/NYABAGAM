@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../domain/user_profile.dart';
 import '../../memory/data/memory_repository.dart';
+import '../../../core/notifications/notification_service.dart';
+import '../../../core/notifications/reminder_scheduler.dart';
 
 class UserProfileController extends ChangeNotifier {
   UserProfileController._();
@@ -47,7 +49,12 @@ class UserProfileController extends ChangeNotifier {
     String? avatarId,
     bool? is2DayAlertsEnabled,
     bool? isWhatsAppEnabled,
+    bool? isPhoneVerified,
+    int? reminderHour,
+    int? reminderMinute,
   }) async {
+    final phoneChanged = phone != null && phone != _profile.phone;
+
     _profile = _profile.copyWith(
       name: name,
       phone: phone,
@@ -55,10 +62,21 @@ class UserProfileController extends ChangeNotifier {
       city: city,
       preferredLanguage: preferredLanguage,
       avatarId: avatarId,
+      // Changing the number invalidates any previous verification.
+      isPhoneVerified: isPhoneVerified ?? (phoneChanged ? false : null),
       is2DayAlertsEnabled: is2DayAlertsEnabled,
       isWhatsAppEnabled: isWhatsAppEnabled,
+      reminderHour: reminderHour,
+      reminderMinute: reminderMinute,
     );
     await _persist();
+
+    // Alert preferences and reminder time both change when alarms should fire.
+    if (is2DayAlertsEnabled != null ||
+        reminderHour != null ||
+        reminderMinute != null) {
+      await rescheduleReminders();
+    }
   }
 
   Future<void> completeOnboarding({
@@ -67,6 +85,7 @@ class UserProfileController extends ChangeNotifier {
     String? city,
     String? preferredLanguage,
     String? avatarId,
+    bool? isPhoneVerified,
   }) async {
     _profile = _profile.copyWith(
       name: name ?? _profile.name,
@@ -74,9 +93,27 @@ class UserProfileController extends ChangeNotifier {
       city: city ?? _profile.city,
       preferredLanguage: preferredLanguage ?? _profile.preferredLanguage,
       avatarId: avatarId ?? _profile.avatarId,
+      isPhoneVerified: isPhoneVerified ?? _profile.isPhoneVerified,
       isOnboardingCompleted: true,
+      createdAt: _profile.createdAt ?? DateTime.now(),
     );
     await _persist();
+  }
+
+  /// Rebuilds every scheduled alarm from the current memories and preferences.
+  Future<int> rescheduleReminders() async {
+    try {
+      final memories = await MemoryRepositoryFactory.current.confirmed();
+      return await ReminderScheduler.instance.rescheduleAll(
+        memories,
+        hour: _profile.reminderHour,
+        minute: _profile.reminderMinute,
+        enabled: _profile.is2DayAlertsEnabled,
+      );
+    } catch (e) {
+      debugPrint('[UserProfileController] reschedule failed: $e');
+      return 0;
+    }
   }
 
   Future<void> resetOnboarding() async {
@@ -98,10 +135,15 @@ class UserProfileController extends ChangeNotifier {
 
   Future<void> clearAllData() async {
     try {
+      // Cancel alarms first: they outlive the app data and would keep firing
+      // for memories that no longer exist.
+      await NotificationService.instance.cancelAll();
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
-      _profile = const UserProfile(isOnboardingCompleted: false);
-    } catch (_) {}
+      _profile = const UserProfile();
+    } catch (e) {
+      debugPrint('[UserProfileController] clear failed: $e');
+    }
     notifyListeners();
   }
 }

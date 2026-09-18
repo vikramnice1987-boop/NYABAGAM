@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches NyColors.wallpaperBaseDark so the OS launch window, the Flutter
+         splash and the app canvas are the same colour and there is no flash. -->
+    <color name="ny_wallpaper">#05060E</color>
+</resources>

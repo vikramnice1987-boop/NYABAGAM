@@ -15,6 +15,10 @@ class SpeechService implements BaseSpeechService {
   bool _isListening = false;
   @override
   bool get isListening => _isListening;
+
+  @override
+  String? lastError;
+
   SpeechResultCallback? _callback;
   VoidCallback? _doneCallback;
 

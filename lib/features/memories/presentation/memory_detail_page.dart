@@ -9,6 +9,7 @@ import '../../../shared/components/ny_button.dart';
 import '../../../shared/components/ny_card.dart';
 import '../../../shared/components/ny_entity_chip.dart';
 import '../../../shared/components/ny_evidence_card.dart';
+import '../../../core/notifications/reminder_scheduler.dart';
 import '../../memory/data/memory_repository.dart';
 import '../../memory/domain/memory_models.dart';
 
@@ -152,7 +153,7 @@ class MemoryDetailPage extends StatelessWidget {
           ],
 
           // Attached Image or Bill Review
-          if (memory.attachmentBase64 != null) ...[
+          if (memory.attachmentBase64 != null || memory.attachmentUrl != null) ...[
             Text('Attached Document / Photo', style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
             NyCard(
@@ -175,12 +176,25 @@ class MemoryDetailPage extends StatelessWidget {
                   const SizedBox(height: 10),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.memory(
-                      base64Decode(memory.attachmentBase64!),
-                      height: 200,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
+                    child: memory.attachmentUrl != null
+                        ? Image.network(
+                            memory.attachmentUrl!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => const SizedBox(
+                              height: 120,
+                              child: Center(
+                                child: Icon(Icons.broken_image_outlined),
+                              ),
+                            ),
+                          )
+                        : Image.memory(
+                            base64Decode(memory.attachmentBase64!),
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
                   ),
                 ],
               ),
@@ -317,6 +331,9 @@ class MemoryDetailPage extends StatelessWidget {
               );
 
               if (confirm == true && context.mounted) {
+                // Cancel first: a scheduled alarm outlives the memory row and
+                // would still fire for something the user just deleted.
+                await ReminderScheduler.instance.cancelMemory(memory.id);
                 await MemoryRepositoryFactory.current.deleteMemory(memory.id);
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

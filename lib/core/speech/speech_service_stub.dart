@@ -10,6 +10,9 @@ class SpeechService implements BaseSpeechService {
   bool get isListening => _isListening;
 
   @override
+  String? lastError;
+
+  @override
   Future<bool> startListening({
     required SpeechResultCallback onResult,
     required VoidCallback onDone,

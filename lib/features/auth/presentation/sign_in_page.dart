@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/theme/ny_colors.dart';
+import '../../../core/theme/ny_elevation.dart';
 import '../../../core/theme/ny_radius.dart';
 import '../../../core/theme/ny_spacing.dart';
-import '../../../shared/components/ny_scaffold.dart';
+import '../../../core/theme/ny_typography.dart';
 import '../../../shared/components/ny_button.dart';
+import '../../../shared/components/ny_card.dart';
+import '../../../shared/components/ny_scaffold.dart';
+import '../../profile/presentation/user_profile_controller.dart';
 import 'auth_controller.dart';
+import 'otp_verification_page.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -16,9 +22,8 @@ class SignInPage extends StatefulWidget {
 
 class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
-  final _otpController = TextEditingController();
   final _auth = AuthController.instance;
-  bool _showOtpInput = false;
+  String? _localError;
 
   @override
   void initState() {
@@ -34,212 +39,253 @@ class _SignInPageState extends State<SignInPage> {
   void dispose() {
     _auth.removeListener(_onAuthChanged);
     _emailController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
-  Future<void> _handleSendMagicLink() async {
-    final success = await _auth.sendMagicLink(_emailController.text);
+  Future<void> _continueWithGoogle() async {
+    setState(() => _localError = null);
+    final success = await _auth.signInWithGoogle();
     if (success && mounted) {
-      setState(() => _showOtpInput = true);
+      final email = _auth.currentEmail ?? 'user@gmail.com';
+      await UserProfileController.instance.updateProfile(
+        email: email,
+        name: _auth.currentUser?.displayName ?? email.split('@').first,
+      );
+      await UserProfileController.instance.completeOnboarding();
+      if (mounted) context.go('/');
     }
   }
 
-  Future<void> _handleVerifyOtp() async {
-    final success = await _auth.verifyOtp(
-      email: _emailController.text,
-      token: _otpController.text,
-    );
-    if (success && mounted) {
-      context.go('/');
+  void _proceedToGmailOtp() {
+    final email = _emailController.text.trim().toLowerCase();
+    if (email.isEmpty || !email.contains('@') || !email.contains('.')) {
+      setState(() => _localError = 'Please enter a valid Gmail address.');
+      return;
     }
+
+    setState(() => _localError = null);
+    Navigator.of(context).push(
+      MaterialPageRoute<bool>(
+        builder: (context) => OtpVerificationPage(destination: email),
+      ),
+    );
+  }
+
+  Future<void> _continueAsGuest() async {
+    await _auth.setGuestSession();
+    await UserProfileController.instance.completeOnboarding();
+    if (mounted) context.go('/');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final displayedError = _localError ?? _auth.errorMessage;
 
     return NyScaffold(
       body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: NySpacing.space24, vertical: NySpacing.space32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 440),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Brand Logo & Header
-                  Center(
-                    child: Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: NyColors.primaryLight,
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: NyColors.primaryLight.withAlpha(50),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: NySpacing.space24,
+            vertical: NySpacing.space32,
+          ),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Center(
+                  child: Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: NyColors.accentGradient,
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      child: const Icon(
-                        Icons.bubble_chart_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: NyColors.primaryLight.withValues(alpha: 0.4),
+                          blurRadius: 24,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.psychology_rounded,
+                      color: Colors.white,
+                      size: 40,
                     ),
                   ),
-                  const SizedBox(height: NySpacing.space20),
-                  Text(
-                    'NYABAGAM',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
-                    ),
+                ),
+                const SizedBox(height: NySpacing.space20),
+                Text(
+                  'NYABAGAM',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Your private, trustworthy personal memory companion.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withAlpha(160),
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Context-First Long-Term Personal Memory Companion',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
-                  const SizedBox(height: NySpacing.space32),
+                ),
+                const SizedBox(height: NySpacing.space32),
 
-                  // Error Banner
-                  if (_auth.errorMessage != null) ...[
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: NyColors.statusError.withAlpha(20),
-                        borderRadius: NyRadius.borderMd,
-                        border: Border.all(color: NyColors.statusError.withAlpha(80)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline_rounded, color: NyColors.statusError, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _auth.errorMessage!,
-                              style: const TextStyle(fontSize: 12, color: NyColors.statusError, fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: NySpacing.space16),
-                  ],
-
-                  // Success Magic Link Notification Banner
-                  if (_auth.isMagicLinkSent) ...[
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: NyColors.statusSuccess.withAlpha(20),
-                        borderRadius: NyRadius.borderMd,
-                        border: Border.all(color: NyColors.statusSuccess.withAlpha(80)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.mark_email_read_rounded, color: NyColors.statusSuccess, size: 22),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Sign-in link dispatched!',
-                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: NyColors.statusSuccess),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Check ${_emailController.text.trim()} to confirm your session or enter code below.',
-                                  style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(180)),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: NySpacing.space20),
-                  ],
-
-                  // Email Input Field
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    autocorrect: false,
-                    enabled: !_auth.isLoading,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      hintText: 'name@example.com',
-                      prefixIcon: Icon(Icons.email_outlined, size: 20),
-                    ),
-                    onSubmitted: (_) => _handleSendMagicLink(),
+                if (displayedError != null) ...<Widget>[
+                  _MessageBanner(
+                    icon: Icons.error_outline_rounded,
+                    color: NyColors.statusError,
+                    message: displayedError,
                   ),
                   const SizedBox(height: NySpacing.space16),
+                ],
 
-                  // Send Magic Link Button
-                  NyButton(
-                    label: _auth.isMagicLinkSent ? 'Resend Magic Link' : 'Continue with Email',
-                    icon: Icons.arrow_forward_rounded,
-                    isLoading: _auth.isLoading && !_showOtpInput,
-                    onPressed: _auth.isLoading ? null : _handleSendMagicLink,
-                  ),
+                // 1. Continue with Google
+                NyButton(
+                  label: 'Continue with Google',
+                  icon: Icons.g_mobiledata_rounded,
+                  isLoading: _auth.isLoading,
+                  onPressed: _auth.isLoading ? null : _continueWithGoogle,
+                ),
+                const SizedBox(height: NySpacing.space20),
 
-                  // Optional 6-digit verification code input
-                  if (_showOtpInput || _auth.isMagicLinkSent) ...[
-                    const SizedBox(height: NySpacing.space24),
-                    const Divider(),
-                    const SizedBox(height: NySpacing.space16),
-                    Text(
-                      'Or enter 6-digit confirmation code:',
-                      style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _otpController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 6,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(letterSpacing: 8, fontSize: 18, fontWeight: FontWeight.w700),
-                      decoration: const InputDecoration(
-                        hintText: '------',
-                        counterText: '',
+                // Divider
+                Row(
+                  children: <Widget>[
+                    const Expanded(child: Divider()),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        'or sign in with Gmail OTP',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    NyButton(
-                      label: 'Verify & Enter NYABAGAM',
-                      variant: NyButtonVariant.secondary,
-                      isLoading: _auth.isLoading && _showOtpInput,
-                      onPressed: _auth.isLoading ? null : _handleVerifyOtp,
-                    ),
+                    const Expanded(child: Divider()),
                   ],
+                ),
+                const SizedBox(height: NySpacing.space20),
 
-                  const SizedBox(height: NySpacing.space32),
-                  // Privacy & Security note
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                // 2. Gmail OTP Input Field
+                NyCard(
+                  level: NyGlassLevel.sunken,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.shield_outlined, size: 14, color: theme.colorScheme.onSurface.withAlpha(120)),
-                      const SizedBox(width: 6),
                       Text(
-                        'Zero-knowledge personal memory architecture',
-                        style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withAlpha(120)),
+                        'YOUR GMAIL ADDRESS',
+                        style: NyTypography.overline.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: NySpacing.space8),
+                      TextField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        autocorrect: false,
+                        enabled: !_auth.isLoading,
+                        decoration: const InputDecoration(
+                          hintText: 'e.g. alex@gmail.com',
+                          prefixIcon: Icon(Icons.email_outlined, size: 20),
+                        ),
+                        onSubmitted: (_) => _proceedToGmailOtp(),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: NySpacing.space16),
+
+                // Get OTP Button
+                NyButton(
+                  label: 'Get 6-Digit OTP',
+                  icon: Icons.mark_email_read_outlined,
+                  variant: NyButtonVariant.secondary,
+                  isLoading: _auth.isLoading,
+                  onPressed: _auth.isLoading ? null : _proceedToGmailOtp,
+                ),
+
+                const SizedBox(height: NySpacing.space24),
+
+                // 3. Guest / Demo Mode
+                Center(
+                  child: TextButton.icon(
+                    onPressed: _continueAsGuest,
+                    icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                    label: const Text('Explore as Guest (Offline Demo)'),
+                  ),
+                ),
+
+                const SizedBox(height: NySpacing.space24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Icon(
+                      Icons.shield_outlined,
+                      size: 14,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Your memories are private and scoped to your Gmail',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MessageBanner extends StatelessWidget {
+  const _MessageBanner({
+    required this.icon,
+    required this.color,
+    required this.message,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NySpacing.space12,
+        vertical: NySpacing.space10,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: NyRadius.borderMd,
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: NySpacing.space8),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(fontSize: 12, color: color),
+            ),
+          ),
+        ],
       ),
     );
   }
