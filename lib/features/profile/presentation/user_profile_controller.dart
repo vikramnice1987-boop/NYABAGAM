@@ -50,10 +50,12 @@ class UserProfileController extends ChangeNotifier {
     bool? is2DayAlertsEnabled,
     bool? isWhatsAppEnabled,
     bool? isPhoneVerified,
+    bool? isEmailVerified,
     int? reminderHour,
     int? reminderMinute,
   }) async {
     final phoneChanged = phone != null && phone != _profile.phone;
+    final emailChanged = email != null && email != _profile.email;
 
     _profile = _profile.copyWith(
       name: name,
@@ -62,8 +64,9 @@ class UserProfileController extends ChangeNotifier {
       city: city,
       preferredLanguage: preferredLanguage,
       avatarId: avatarId,
-      // Changing the number invalidates any previous verification.
+      // Changing the number or email invalidates any previous verification unless explicitly overridden.
       isPhoneVerified: isPhoneVerified ?? (phoneChanged ? false : null),
+      isEmailVerified: isEmailVerified ?? (emailChanged ? false : null),
       is2DayAlertsEnabled: is2DayAlertsEnabled,
       isWhatsAppEnabled: isWhatsAppEnabled,
       reminderHour: reminderHour,
@@ -82,18 +85,22 @@ class UserProfileController extends ChangeNotifier {
   Future<void> completeOnboarding({
     String? name,
     String? phone,
+    String? email,
     String? city,
     String? preferredLanguage,
     String? avatarId,
     bool? isPhoneVerified,
+    bool? isEmailVerified,
   }) async {
     _profile = _profile.copyWith(
       name: name ?? _profile.name,
       phone: phone ?? _profile.phone,
+      email: email ?? _profile.email,
       city: city ?? _profile.city,
       preferredLanguage: preferredLanguage ?? _profile.preferredLanguage,
       avatarId: avatarId ?? _profile.avatarId,
       isPhoneVerified: isPhoneVerified ?? _profile.isPhoneVerified,
+      isEmailVerified: isEmailVerified ?? _profile.isEmailVerified,
       isOnboardingCompleted: true,
       createdAt: _profile.createdAt ?? DateTime.now(),
     );

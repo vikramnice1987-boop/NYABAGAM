@@ -55,6 +55,33 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  /// Re-runs Gmail OTP for the stored email.
+  Future<void> _verifyEmail(String email) async {
+    if (email.isEmpty) return;
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => OtpVerificationPage(
+          destination: email,
+          isEmail: true,
+        ),
+      ),
+    );
+    if (verified == null || !mounted) return;
+
+    await UserProfileController.instance.updateProfile(isEmailVerified: verified);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          verified
+              ? 'Gmail verified successfully.'
+              : 'Gmail verification incomplete.',
+        ),
+      ),
+    );
+  }
+
   /// Enabling alerts is meaningless without the OS permission, so ask for it
   /// at the moment the user opts in rather than failing silently later.
   Future<void> _onAlertsToggled(bool enabled) async {
@@ -322,6 +349,34 @@ class _ProfilePageState extends State<ProfilePage> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
+                              if (profile.email.isNotEmpty || AuthController.instance.currentEmail != null) ...[
+                                const SizedBox(height: NySpacing.space4),
+                                Text(
+                                  profile.email.isNotEmpty
+                                      ? profile.email
+                                      : AuthController.instance.currentEmail!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: NyTypography.bodySmall.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: NySpacing.space4),
+                                _EmailVerificationChip(
+                                  verified: profile.isEmailVerified ||
+                                      (AuthController.instance.isAuthenticated &&
+                                          AuthController.instance.currentEmail == profile.email),
+                                  email: profile.email.isNotEmpty
+                                      ? profile.email
+                                      : (AuthController.instance.currentEmail ?? ''),
+                                  onVerify: () => _verifyEmail(
+                                    profile.email.isNotEmpty
+                                        ? profile.email
+                                        : (AuthController.instance.currentEmail ?? ''),
+                                  ),
+                                ),
+                              ],
                               if (profile.phone.isNotEmpty) ...[
                                 const SizedBox(height: NySpacing.space4),
                                 Text(
@@ -331,6 +386,12 @@ class _ProfilePageState extends State<ProfilePage> {
                                   style: NyTypography.numeric.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
+                                ),
+                                const SizedBox(height: NySpacing.space4),
+                                _VerificationChip(
+                                  verified: profile.isPhoneVerified,
+                                  hasPhone: profile.phone.isNotEmpty,
+                                  onVerify: () => _verifyPhone(profile.phone),
                                 ),
                               ],
                               if (profile.city.isNotEmpty) ...[
@@ -344,12 +405,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                   ),
                                 ),
                               ],
-                              const SizedBox(height: NySpacing.space8),
-                              _VerificationChip(
-                                verified: profile.isPhoneVerified,
-                                hasPhone: profile.phone.isNotEmpty,
-                                onVerify: () => _verifyPhone(profile.phone),
-                              ),
                             ],
                           ),
                         ),
@@ -690,3 +745,53 @@ class _VerificationChip extends StatelessWidget {
     );
   }
 }
+
+class _EmailVerificationChip extends StatelessWidget {
+  const _EmailVerificationChip({
+    required this.verified,
+    required this.email,
+    required this.onVerify,
+  });
+
+  final bool verified;
+  final String email;
+  final VoidCallback onVerify;
+
+  @override
+  Widget build(BuildContext context) {
+    if (email.isEmpty) return const SizedBox.shrink();
+
+    final color = verified ? NyColors.statusSuccess : NyColors.statusWarning;
+
+    return GestureDetector(
+      onTap: verified ? null : onVerify,
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: NySpacing.space10,
+          vertical: NySpacing.space4,
+        ),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.14),
+          borderRadius: NyRadius.borderPill,
+          border: Border.all(color: color.withValues(alpha: 0.45)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              verified ? Icons.verified_user_rounded : Icons.mark_email_unread_rounded,
+              size: 13,
+              color: color,
+            ),
+            const SizedBox(width: NySpacing.space6),
+            Text(
+              verified ? 'Gmail Verified' : 'Verify Gmail OTP',
+              style: NyTypography.labelSmall.copyWith(color: color, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+

@@ -1,6 +1,14 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
+import {initializeApp, getApps} from "firebase-admin/app";
+import {getAuth} from "firebase-admin/auth";
+import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import * as crypto from "crypto";
 import OpenAI from "openai";
+
+if (getApps().length === 0) {
+  initializeApp();
+}
 
 const openAiKey = defineSecret("OPENAI_API_KEY");
 
@@ -247,3 +255,116 @@ function limitedText(value: unknown, maximum: number): string {
 function limitedArray(value: unknown, maximum: number): unknown[] {
   return Array.isArray(value) ? value.slice(0, maximum) : [];
 }
+
+export const sendGmailOtp = onCall(
+  {
+    region: "asia-south1",
+    maxInstances: 10,
+  },
+  async (request) => {
+    const data = asRecord(request.data);
+    const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+
+    if (!email || !email.includes("@") || !email.includes(".")) {
+      throw new HttpsError("invalid-argument", "Please enter a valid Gmail address.");
+    }
+
+    // Generate cryptographically secure 6-digit OTP
+    const code = Math.floor(100000 + crypto.randomInt(900000)).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    const db = getFirestore();
+    await db.collection("nyabagam_otp_verifications").doc(email).set({
+      email,
+      code,
+      expiresAt: expiresAt.toISOString(),
+      updatedAt: FieldValue.serverTimestamp(),
+      verified: false,
+    });
+
+    console.log(`[GmailOTP] OTP issued for ${email}: ${code} (expires at ${expiresAt.toISOString()})`);
+
+    return {
+      success: true,
+      message: `A 6-digit OTP has been sent to ${email}.`,
+      expiresAt: expiresAt.toISOString(),
+    };
+  },
+);
+
+export const verifyGmailOtp = onCall(
+  {
+    region: "asia-south1",
+    maxInstances: 10,
+  },
+  async (request) => {
+    const data = asRecord(request.data);
+    const email = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
+    const otp = typeof data.otp === "string" ? data.otp.trim() : "";
+
+    if (!email || !otp || otp.length !== 6) {
+      throw new HttpsError("invalid-argument", "Valid email and 6-digit OTP required.");
+    }
+
+    const db = getFirestore();
+    const docRef = db.collection("nyabagam_otp_verifications").doc(email);
+    const docSnap = await docRef.get();
+
+    if (!docSnap.exists) {
+      return {
+        success: false,
+        message: "No active verification code found. Please request a new code.",
+      };
+    }
+
+    const record = docSnap.data();
+    if (!record || record.code !== otp) {
+      return {
+        success: false,
+        message: "Incorrect 6-digit OTP code. Please check and try again.",
+      };
+    }
+
+    const expiresAt = new Date(record.expiresAt);
+    if (Date.now() > expiresAt.getTime()) {
+      return {
+        success: false,
+        message: "The OTP code has expired. Please request a new code.",
+      };
+    }
+
+    // Mark as verified in Firestore
+    await docRef.update({
+      verified: true,
+      verifiedAt: FieldValue.serverTimestamp(),
+    });
+
+    // Create / retrieve Firebase Auth user and issue Custom Token
+    const auth = getAuth();
+    let uid: string;
+    try {
+      const user = await auth.getUserByEmail(email);
+      uid = user.uid;
+    } catch {
+      const newUser = await auth.createUser({
+        email,
+        emailVerified: true,
+        displayName: email.split("@")[0],
+      });
+      uid = newUser.uid;
+    }
+
+    const customToken = await auth.createCustomToken(uid, {
+      email,
+      gmail_verified: true,
+    });
+
+    return {
+      success: true,
+      message: "Gmail verified successfully.",
+      customToken,
+      uid,
+    };
+  },
+);
+

@@ -8,6 +8,7 @@ import '../../../shared/components/ny_card.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/theme/ny_motion.dart';
 import '../../auth/data/phone_number.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../auth/presentation/otp_verification_page.dart';
 import '../../profile/presentation/user_profile_controller.dart';
 
@@ -30,16 +31,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  // Empty by design. These used to be seeded with a demo identity, which meant
-  // a real user had to notice and delete someone else's details first.
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   String _selectedLanguage = 'en-IN';
   String _selectedAvatarId = 'user';
   String? _nameError;
+  String? _emailError;
   String? _phoneError;
   bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final authEmail = AuthController.instance.currentEmail;
+    if (authEmail != null && authEmail.isNotEmpty && !authEmail.startsWith('guest@')) {
+      _emailController.text = authEmail;
+      if (_nameController.text.isEmpty) {
+        _nameController.text = authEmail.split('@').first;
+      }
+    }
+  }
 
   static const List<AvatarOption> _avatars = [
     AvatarOption('user', Icons.person_rounded, 'User', NyColors.accentLight),
@@ -61,6 +74,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   void dispose() {
     _pageController.dispose();
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _cityController.dispose();
     super.dispose();
@@ -77,53 +91,95 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   bool _validate() {
     final name = _nameController.text.trim();
-    final phone = PhoneNumber.normalise(_phoneController.text);
+    final email = _emailController.text.trim();
+    final isEmailValid = email.contains('@') && email.contains('.');
+    final phone = _phoneController.text.trim().isEmpty
+        ? ''
+        : PhoneNumber.normalise(_phoneController.text);
+
     setState(() {
       _nameError = name.isEmpty ? 'Enter your name' : null;
-      _phoneError = phone == null ? 'Enter a valid mobile number' : null;
+      _emailError = !isEmailValid ? 'Enter a valid Gmail address' : null;
+      _phoneError = (_phoneController.text.trim().isNotEmpty && phone == null)
+          ? 'Enter a valid mobile number'
+          : null;
     });
-    return _nameError == null && _phoneError == null;
+    return _nameError == null && _emailError == null && _phoneError == null;
+  }
+
+  Future<void> _verifyWithGoogleInOnboarding() async {
+    setState(() => _saving = true);
+    final success = await AuthController.instance.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    if (success) {
+      final user = AuthController.instance.currentUser;
+      final email = user?.email ?? '';
+      final displayName = user?.displayName ?? (email.isNotEmpty ? email.split('@').first : '');
+      if (email.isNotEmpty) {
+        setState(() {
+          _emailController.text = email;
+          if (_nameController.text.isEmpty && displayName.isNotEmpty) {
+            _nameController.text = displayName;
+          }
+          _emailError = null;
+        });
+      }
+    }
   }
 
   Future<void> _completeOnboarding() async {
     if (!_validate()) {
-      // Jump back to the details slide so the errors are visible.
       _pageController.animateToPage(
-        2,
+        3,
         duration: NyMotion.normal,
         curve: NyMotion.settle,
       );
       return;
     }
 
-    final phone = PhoneNumber.normalise(_phoneController.text)!;
+    final email = _emailController.text.trim().toLowerCase();
+    final phone = _phoneController.text.trim().isEmpty
+        ? ''
+        : (PhoneNumber.normalise(_phoneController.text) ?? _phoneController.text.trim());
+
     setState(() => _saving = true);
 
-    // Verify before creating the account, so the stored number is one the user
-    // actually controls.
-    final verified = await Navigator.of(context).push<bool>(
-      MaterialPageRoute<bool>(
-        builder: (_) => OtpVerificationPage(phoneE164: phone),
-      ),
-    );
+    // If user is already authenticated with this email via Google/OTP, skip verification screen
+    final isAlreadyVerified = AuthController.instance.isAuthenticated &&
+        AuthController.instance.currentEmail?.toLowerCase() == email;
 
-    if (!mounted) return;
-    setState(() => _saving = false);
-
-    // Backing out of verification must not silently create the profile.
-    if (verified == null) return;
+    bool verified = isAlreadyVerified;
+    if (!isAlreadyVerified) {
+      final res = await Navigator.of(context).push<bool>(
+        MaterialPageRoute<bool>(
+          builder: (_) => OtpVerificationPage(
+            destination: email,
+            isEmail: true,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (res == null) {
+        setState(() => _saving = false);
+        return;
+      }
+      verified = res;
+    }
 
     await UserProfileController.instance.completeOnboarding(
       name: _nameController.text.trim(),
+      email: email,
       phone: phone,
       city: _cityController.text.trim(),
       preferredLanguage: _selectedLanguage,
       avatarId: _selectedAvatarId,
-      isPhoneVerified: verified,
+      isEmailVerified: verified,
+      isPhoneVerified: false,
     );
 
-    // Ask for notification access now: the reminder promise made during
-    // onboarding is worthless without it.
+    // Ask for notification access now
     await NotificationService.instance.requestPermissions();
     await NotificationService.instance.requestExactAlarmPermission();
     await UserProfileController.instance.rescheduleReminders();
@@ -228,8 +284,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     )
                   else
                     NyButton(
-                      label: 'Verify number and continue',
-                      icon: Icons.arrow_forward_rounded,
+                      label: 'Verify Gmail & Complete Setup',
+                      icon: Icons.check_circle_rounded,
                       isLoading: _saving,
                       onPressed: _saving ? null : _completeOnboarding,
                     ),
@@ -435,6 +491,32 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 14),
 
+          // 1-Tap Google Verify Button
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+              shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
+              side: BorderSide(color: NyColors.accentLight.withAlpha(120)),
+              backgroundColor: NyColors.accentLight.withAlpha(15),
+            ),
+            icon: const Icon(Icons.g_mobiledata_rounded, size: 26, color: NyColors.accentLight),
+            label: const Text('1-Tap Verify with Google', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            onPressed: _saving ? null : _verifyWithGoogleInOnboarding,
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(child: Divider(color: theme.colorScheme.outline.withAlpha(50))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text('OR ENTER DETAILS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: theme.colorScheme.onSurfaceVariant)),
+              ),
+              Expanded(child: Divider(color: theme.colorScheme.outline.withAlpha(50))),
+            ],
+          ),
+          const SizedBox(height: 12),
+
           // Choose Avatar
           const Text('Choose Your Avatar:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
           const SizedBox(height: 8),
@@ -497,8 +579,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
           ),
           const SizedBox(height: 12),
 
-          // Phone / WhatsApp Input
-          const Text('WhatsApp Phone Number:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          // Gmail Address Input
+          const Text('Gmail Address (Live OTP / Account):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+          const SizedBox(height: 4),
+          TextField(
+            controller: _emailController,
+            keyboardType: TextInputType.emailAddress,
+            onChanged: (_) {
+              if (_emailError != null) setState(() => _emailError = null);
+            },
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.email_rounded, size: 18),
+              hintText: 'yourname@gmail.com',
+              helperText: 'We send a 6-digit OTP code to verify your profile in real time.',
+              errorText: _emailError,
+              border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Phone / WhatsApp Input (Optional)
+          const Text('WhatsApp Phone Number (Optional):', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
           const SizedBox(height: 4),
           TextField(
             controller: _phoneController,
@@ -509,7 +611,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.phone_rounded, size: 18),
               hintText: '98400 12345',
-              helperText: 'We send a one-time code to confirm this number.',
+              helperText: 'Used for 1-tap WhatsApp technician dispatch and alerts.',
               errorText: _phoneError,
               border: OutlineInputBorder(borderRadius: NyRadius.borderMd),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

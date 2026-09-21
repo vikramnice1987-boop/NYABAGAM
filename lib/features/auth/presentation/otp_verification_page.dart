@@ -56,7 +56,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
   bool _sending = false;
   bool _verifying = false;
   String? _error;
-  String? _devCode;
   int _resendIn = 0;
   Timer? _timer;
 
@@ -88,7 +87,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
     setState(() {
       _sending = true;
       _error = null;
-      _devCode = null;
     });
 
     OtpResult res;
@@ -102,7 +100,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
 
     setState(() {
       _sending = false;
-      _devCode = res.devCode;
       _error = res.success ? null : res.message;
     });
 
@@ -151,13 +148,51 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
       await profile.updateProfile(
         name: derivedName,
         email: _destination,
+        isEmailVerified: true,
       );
-      await profile.completeOnboarding();
-      if (mounted) {
+      if (!mounted) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      } else {
         context.go('/');
       }
     } else {
       Navigator.of(context).pop(res.verified);
+    }
+  }
+
+  Future<void> _verifyWithGoogle() async {
+    setState(() {
+      _verifying = true;
+      _error = null;
+    });
+
+    final success = await _auth.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _verifying = false);
+
+    if (success) {
+      final user = _auth.currentUser;
+      final profile = UserProfileController.instance;
+      final email = user?.email ?? _destination;
+      final name = user?.displayName ?? email.split('@').first;
+
+      await profile.updateProfile(
+        name: name,
+        email: email,
+        isEmailVerified: true,
+      );
+
+      if (!mounted) return;
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      } else {
+        context.go('/');
+      }
+    } else {
+      setState(() {
+        _error = _auth.errorMessage ?? 'Google verification was cancelled or failed.';
+      });
     }
   }
 
@@ -196,8 +231,8 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
                 const SizedBox(height: NySpacing.space8),
                 Text(
                   _isEmail
-                      ? 'We sent a 6-digit verification code to ${widget.destination}.'
-                      : 'We sent a 6-digit code to ${widget.destination}.',
+                      ? 'We sent a 6-digit verification code to $_destination. Please check your inbox and spam folder.'
+                      : 'We sent a 6-digit code to $_destination.',
                   style: NyTypography.bodyMedium.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -206,11 +241,6 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             ),
           ),
           const SizedBox(height: NySpacing.space24),
-
-          if (_devCode != null) ...<Widget>[
-            _DevCodeBanner(code: _devCode!),
-            const SizedBox(height: NySpacing.space16),
-          ],
 
           NyCard(
             level: NyGlassLevel.floating,
@@ -288,63 +318,30 @@ class _OtpVerificationPageState extends State<OtpVerificationPage> {
             isLoading: _sending,
             onPressed: (_resendIn > 0 || _sending) ? null : _send,
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Shown in test/dev flow so testers can immediately see the code to verify.
-class _DevCodeBanner extends StatelessWidget {
-  const _DevCodeBanner({required this.code});
-
-  final String code;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: NySpacing.space16,
-        vertical: NySpacing.space12,
-      ),
-      decoration: BoxDecoration(
-        color: NyColors.statusWarning.withValues(alpha: 0.15),
-        borderRadius: NyRadius.borderMd,
-        border: Border.all(
-          color: NyColors.statusWarning.withValues(alpha: 0.5),
-        ),
-      ),
-      child: Row(
-        children: <Widget>[
-          const Icon(
-            Icons.vpn_key_rounded,
-            size: 20,
-            color: NyColors.statusWarning,
-          ),
-          const SizedBox(width: NySpacing.space12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  'Your 6-Digit OTP Code:',
-                  style: NyTypography.labelSmall.copyWith(
-                    color: NyColors.statusWarning,
-                    fontWeight: FontWeight.w700,
-                  ),
+          if (_isEmail) ...[
+            const SizedBox(height: NySpacing.space20),
+            Row(
+              children: [
+                Expanded(child: Divider(color: theme.colorScheme.outline.withAlpha(50))),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('OR', style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurfaceVariant)),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  code,
-                  style: NyTypography.headlineSmall.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 4,
-                  ),
-                ),
+                Expanded(child: Divider(color: theme.colorScheme.outline.withAlpha(50))),
               ],
             ),
-          ),
+            const SizedBox(height: NySpacing.space16),
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(48),
+                shape: RoundedRectangleBorder(borderRadius: NyRadius.borderMd),
+                side: BorderSide(color: theme.colorScheme.outline.withAlpha(80)),
+              ),
+              icon: const Icon(Icons.g_mobiledata_rounded, size: 24, color: NyColors.accentLight),
+              label: const Text('Verify with Google (1-Tap)', style: TextStyle(fontWeight: FontWeight.w700)),
+              onPressed: _verifying ? null : _verifyWithGoogle,
+            ),
+          ],
         ],
       ),
     );

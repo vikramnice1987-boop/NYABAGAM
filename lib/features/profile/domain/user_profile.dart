@@ -21,6 +21,7 @@ class UserProfile {
     this.isWhatsAppEnabled = true,
     this.isOnboardingCompleted = false,
     this.isPhoneVerified = false,
+    this.isEmailVerified = false,
     this.reminderHour = 9,
     this.reminderMinute = 0,
     this.createdAt,
@@ -40,6 +41,9 @@ class UserProfile {
   /// deliberately leaves this false so an unverified number can never be
   /// mistaken for a verified one.
   final bool isPhoneVerified;
+
+  /// True when the user's Gmail ID has been verified via OTP or Google Sign-In.
+  final bool isEmailVerified;
 
   /// Default time of day used when scheduling a warranty reminder.
   final int reminderHour;
@@ -105,6 +109,7 @@ class UserProfile {
     bool? isWhatsAppEnabled,
     bool? isOnboardingCompleted,
     bool? isPhoneVerified,
+    bool? isEmailVerified,
     int? reminderHour,
     int? reminderMinute,
     DateTime? createdAt,
@@ -119,6 +124,7 @@ class UserProfile {
     isWhatsAppEnabled: isWhatsAppEnabled ?? this.isWhatsAppEnabled,
     isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
     isPhoneVerified: isPhoneVerified ?? this.isPhoneVerified,
+    isEmailVerified: isEmailVerified ?? this.isEmailVerified,
     reminderHour: reminderHour ?? this.reminderHour,
     reminderMinute: reminderMinute ?? this.reminderMinute,
     createdAt: createdAt ?? this.createdAt,
@@ -135,6 +141,7 @@ class UserProfile {
     isWhatsAppEnabled: json['is_whatsapp_enabled'] as bool? ?? true,
     isOnboardingCompleted: json['is_onboarding_completed'] as bool? ?? false,
     isPhoneVerified: json['is_phone_verified'] as bool? ?? false,
+    isEmailVerified: json['is_email_verified'] as bool? ?? false,
     reminderHour: json['reminder_hour'] as int? ?? 9,
     reminderMinute: json['reminder_minute'] as int? ?? 0,
     createdAt: json['created_at'] == null
@@ -153,6 +160,7 @@ class UserProfile {
     'is_whatsapp_enabled': isWhatsAppEnabled,
     'is_onboarding_completed': isOnboardingCompleted,
     'is_phone_verified': isPhoneVerified,
+    'is_email_verified': isEmailVerified,
     'reminder_hour': reminderHour,
     'reminder_minute': reminderMinute,
     'created_at': createdAt?.toIso8601String(),
