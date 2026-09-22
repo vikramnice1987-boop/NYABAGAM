@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NYABAGAM (ஞாபகம்) — Your Memory, With Context | Private AI Memory Companion</title>
+  
+  <!-- Meta & SEO -->
+  <meta name="description" content="NYABAGAM is a private personal-memory companion. Capture voice notes & thoughts, auto-extract entities, ask grounded questions, and connect life context with zero AI training.">
+  <meta name="keywords" content="NYABAGAM, memory companion, personal knowledge graph, private AI, offline first, voice capture, context bridge, remember, Tamil ஞாபகம்">
+  <meta name="author" content="NYABAGAM Team">
+  <meta name="theme-color" content="#F6F8FD">
+  
+  <!-- Open Graph / Social -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NYABAGAM — Your Memory, With Context">
+  <meta property="og:description" content="A private personal-memory companion built on an 8-stage feedback loop. Capture, Understand, Remember, and Act with zero hallucination.">
+  <meta property="og:image" content="assets/icon.png">
+  <meta property="og:url" content="https://nyabagam.app">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NYABAGAM — Your Memory, With Context">
+  <meta name="twitter:description" content="A private personal-memory companion. Capture thoughts, auto-extract entities, and recall with grounded citations.">
+  <meta name="twitter:image" content="assets/icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon.png">
+
+  <!-- Google Fonts: Inter & Noto Sans Tamil -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Schema.org JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "NYABAGAM",
+    "alternateName": "ஞாபகம்",
+    "operatingSystem": "Android",
+    "applicationCategory": "ProductivityApplication",
+    "description": "Private personal-memory companion built on an 8-stage memory lifecycle. Captures voice notes and thoughts with grounded natural language recall and proactive context.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+</head>
+<body>
+
+  <!-- Ambient Wallpaper Orbs -->
+  <div class="ambient-mesh" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="orb orb-4"></div>
+  </div>
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- Header / Navigation Bar -->
+  <header class="navbar" id="navbar">
+    <div class="container nav-wrapper">
+      <a href="#" class="logo-brand" aria-label="NYABAGAM Home">
+        <div class="logo-mark">ஞா</div>
+        <div class="brand-text">
+          <span class="brand-title">NYABAGAM</span>
+          <span class="brand-sub">ஞாபகம் • Memory with Context</span>
+        </div>
+      </a>
+
+      <nav>
+        <ul class="nav-links" id="navLinks">
+          <li><a href="#simulator" class="nav-link">Live Simulator</a></li>
+          <li><a href="#stages" class="nav-link">8-Stage Engine</a></li>
+          <li><a href="#features" class="nav-link">Features</a></li>
+          <li><a href="#comparison" class="nav-link">Why Nyabagam</a></li>
+          <li><a href="#privacy" class="nav-link">Privacy Manifesto</a></li>
+          <li><a href="#faq" class="nav-link">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <button class="theme-toggle-btn" id="themeToggleBtn" aria-label="Toggle light or dark theme" title="Toggle theme">
+          <span id="themeToggleIcon">🌙</span>
+        </button>
+        <a href="#download" class="btn btn-primary btn-sm download-apk-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9993.4482.9993.9993s-.4483.9997-.9993.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9994.4482.9994.9993s-.4483.9997-.9994.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.412 13.8533 8.125 12 8.125c-1.8533 0-3.5902.287-5.1368.8247L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9973 3.4592C2.6889 11.1867.3432 14.6589 0 18.75h24c-.3432-4.0911-2.6889-7.5633-6.1185-9.4286"/>
+          </svg>
+          Download APK (v1.0)
+        </a>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle Menu" aria-expanded="false">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <div class="container hero-content">
+        <div class="badge-pill">
+          <span>✨ Private Personal Memory Companion</span>
+          <span>•</span>
+          <span style="color: var(--status-success);">V1.0 Ready</span>
+        </div>
+
+        <h1 class="hero-title">
+          Your Memory, <br>
+          <span class="text-gradient-neon">With Context.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Never lose a thought, service receipt, or crucial conversation again. 
+          <strong>NYABAGAM</strong> turns raw voice memos and fleeting notes into an intelligent, 
+          grounded knowledge graph—with zero AI model training on your personal life.
+        </p>
+
+        <div class="hero-cta-group">
+          <a href="#download" class="btn btn-primary btn-lg download-apk-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 16l4-5h-3V4h-2v7H8l4 5zm9 4H3v-2h18v2z"/>
+            </svg>
+            Download Android APK (58 MB)
+          </a>
+          <a href="#simulator" class="btn btn-secondary btn-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Try Interactive Simulator
+          </a>
+        </div>
+
+        <div class="hero-trust-indicators">
+          <div class="trust-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>100% Private & User-Scoped</span>
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Zero OpenAI Training (<code style="color:var(--accent-cyan)">store: false</code>)</span>
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Offline-First Persistence</span>
+          </div>
+          <div class="trust-item">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+            <span>Explicit Action Approval</span>
+          </div>
+        </div>
+
+        <!-- Phone Mockup Showcase -->
+        <div class="hero-showcase">
+          <!-- Floating notification badge left -->
+          <div class="glass-card floating-hero-card card-top-left">
+            <span style="font-size: 20px;">⚡</span>
+            <div>
+              <div style="font-weight: 700; color: #FFFFFF;">2-Day Early Reminder</div>
+              <div style="color: var(--accent-cyan); font-size: 11px;">Car Insurance renewal on Sep 23</div>
+            </div>
+          </div>
+
+          <!-- Floating notification badge right -->
+          <div class="glass-card floating-hero-card card-bottom-right">
+            <span style="font-size: 20px;">🛡️</span>
+            <div>
+              <div style="font-weight: 700; color: #FFFFFF;">Action Safeguard</div>
+              <div style="color: var(--status-success); font-size: 11px;">Requires explicit 1-tap approval</div>
+            </div>
+          </div>
+
+          <div class="phone-mockup-wrap">
+            <div class="phone-mockup">
+              <div class="phone-inner">
+                <!-- Status bar -->
+                <div class="phone-status-bar">
+                  <span>9:41</span>
+                  <div class="phone-notch"></div>
+                  <span>5G 100%</span>
+                </div>
+
+                <!-- App Header in Mockup -->
+                <div class="mockup-app-header">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <div style="width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, #4F46E5, #D946EF); display: flex; align-items: center; justify-content: center; font-family: var(--font-tamil); font-weight: bold; font-size: 13px;">ஞா</div>
+                    <span style="font-weight: 800; font-size: 15px; letter-spacing: 0.5px;">NYABAGAM</span>
+                  </div>
+                  <span style="font-size: 11px; background: rgba(34, 211, 238, 0.15); color: var(--accent-cyan); padding: 3px 8px; border-radius: 10px; font-weight: 600;">ACTIVE V1</span>
+                </div>
+
+                <!-- Memory Card 1 -->
+                <div class="mockup-memory-card">
+                  <span class="mockup-badge">CONTEXT LINKED</span>
+                  <div class="mockup-memory-title">Living Room AC Service</div>
+                  <div class="mockup-memory-desc">Ravi from CoolCare repaired condenser for ₹800. 90-day warranty active.</div>
+                  <div class="mockup-chips">
+                    <span class="entity-chip entity-person">Ravi</span>
+                    <span class="entity-chip entity-thing">AC</span>
+                    <span class="entity-chip entity-amount">₹800</span>
+                    <span class="entity-chip entity-date">Nov 18 Exp</span>
+                  </div>
+                </div>
+
+                <!-- Memory Card 2: Context Bridge Alert -->
+                <div class="mockup-memory-card" style="border-color: rgba(34, 211, 238, 0.4); background: rgba(34, 211, 238, 0.05);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11px; font-weight: 700; color: var(--accent-cyan);">CONTEXT BRIDGE</span>
+                    <span style="font-size: 10px; color: var(--status-success);">● Grounded</span>
+                  </div>
+                  <div style="font-size: 13px; font-weight: 600; margin-bottom: 4px;">"AC not cooling today"</div>
+                  <div style="font-size: 11px; color: var(--text-secondary); margin-bottom: 8px;">Warranty active! Pre-drafted WhatsApp message to Ravi ready for review.</div>
+                  <div style="padding: 6px 10px; background: var(--primary-tint); border-radius: 8px; font-size: 11px; color: var(--primary); font-weight: 700; border: 1px solid rgba(79,70,229,0.25);">
+                    Tap to review & dispatch action →
+                  </div>
+                </div>
+
+                <!-- Floating Capture Dock -->
+                <div class="mockup-floating-dock">
+                  <span style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Capture thought or memo...</span>
+                  <div class="dock-mic-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Interactive Live Simulator Section -->
+    <section class="playground-section" id="simulator">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Interactive Simulation</div>
+          <h2 class="section-title">Experience the 8-Stage Memory Engine</h2>
+          <p class="section-desc">
+            See how NYABAGAM transforms messy real-life thoughts into structured entities, grounded answers, and proactive actions.
+          </p>
+        </div>
+
+        <!-- Scenario Switcher Buttons -->
+        <div class="scenario-bar">
+          <button class="scenario-btn active" data-scenario="ac">
+            <span>❄️</span> AC Service & Warranty
+          </button>
+          <button class="scenario-btn" data-scenario="doctor">
+            <span>🩺</span> Doctor Prescription
+          </button>
+          <button class="scenario-btn" data-scenario="loan">
+            <span>💸</span> Lent Money to Friend
+          </button>
+        </div>
+
+        <!-- Playground Split Grid -->
+        <div class="playground-grid">
+          <!-- Left: Capture -> Understand -> Remember -->
+          <div class="glass-card sim-panel">
+            <div class="sim-panel-title">
+              <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                1. Capture & Understand
+              </h3>
+              <span class="stage-step-indicator">Stages 1 - 3</span>
+            </div>
+
+            <label for="simRawInput" style="display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">
+              Raw Voice Note / Fleeting Thought:
+            </label>
+            <textarea id="simRawInput" class="raw-input-box"></textarea>
+
+            <button id="simExtractBtn" class="btn btn-primary extract-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              Run AI NER & Graph Resolution
+            </button>
+
+            <!-- Extracted Entities Area -->
+            <div class="extracted-box">
+              <div class="entity-group-label">Extracted Entities & Relationships (No Hallucination):</div>
+              <div id="simEntitiesContainer" class="interactive-chips-flow">
+                <!-- Injected via JavaScript -->
+              </div>
+
+              <!-- Canonical Node -->
+              <div class="sim-canonical-card" style="background: var(--bg-surface-elevated); border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <span id="simMemoryTitle" style="font-size: 14px; font-weight: 700; color: var(--text-primary);"></span>
+                  <span id="simMemoryStatus" style="font-size: 11px; padding: 2px 8px; border-radius: 6px; background: rgba(52,211,153,0.15); color: var(--accent-emerald); font-weight: 600;"></span>
+                </div>
+                <div id="simMemorySummary" style="font-size: 12px; color: var(--text-secondary);"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Ask -> Context Bridge -> Action Approval -->
+          <div class="glass-card sim-panel">
+            <div class="sim-panel-title">
+              <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                2. Ask & Proactive Context Bridge
+              </h3>
+              <span class="stage-step-indicator">Stages 4 - 7</span>
+            </div>
+
+            <!-- Grounded Q&A -->
+            <div class="qa-trigger-box">
+              <div style="font-size: 12px; font-weight: 700; color: var(--text-tertiary); text-transform: uppercase; margin-bottom: 8px;">
+                Grounded Natural Language Query:
+              </div>
+              <div class="chat-bubble-user">
+                <span id="simUserQuestion"></span>
+                <span style="font-size: 11px; opacity: 0.7;">User</span>
+              </div>
+              <div class="chat-bubble-ai">
+                <div id="simAiAnswer"></div>
+                <div class="citation-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                  <span id="simCitation"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Proactive Context Bridge Card -->
+            <div class="context-bridge-card">
+              <div class="bridge-header">
+                <span style="font-size: 12px; font-weight: 800; color: var(--accent-cyan); letter-spacing: 0.5px;">PROACTIVE CONTEXT BRIDGE</span>
+                <span style="font-size: 11px; background: rgba(34,211,238,0.2); color: var(--accent-cyan); padding: 2px 6px; border-radius: 4px; font-weight: 600;">Autonomous Match</span>
+              </div>
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 6px;">Trigger statement detected:</div>
+              <div id="simTriggerStatement" style="font-weight: 600; font-size: 14px; margin-bottom: 8px;"></div>
+              <div id="simBridgeInsight" style="font-size: 13px; line-height: 1.5; color: var(--text-primary);"></div>
+
+              <!-- Action Proposal -->
+              <div class="action-preview-box">
+                <div class="action-header">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <span>Human-in-the-Loop Action Proposal</span>
+                </div>
+                <div id="simActionRecipient" style="font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px;"></div>
+                <div id="simActionMessage" style="font-style: italic; color: var(--text-secondary); margin-bottom: 12px;"></div>
+                <button id="simApproveBtn" class="btn btn-secondary btn-sm" style="width: 100%; font-size: 13px;">
+                  Approve & Dispatch Action
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- The 8-Stage Memory Engine Breakdown -->
+    <section class="stages-section" id="stages">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Architecture & Engineering</div>
+          <h2 class="section-title">The Complete 8-Stage Memory Lifecycle</h2>
+          <p class="section-desc">
+            Most apps stop at note-taking. NYABAGAM forms a continuous, self-reinforcing memory feedback loop.
+          </p>
+        </div>
+
+        <div class="stages-grid">
+          <!-- Stage 1 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">1</div>
+              <span>STAGE ONE</span>
+            </div>
+            <h3 class="stage-title">Multi-Modal Capture</h3>
+            <p class="stage-desc">
+              Floating Capture Dock accessible anywhere, voice audio memos with Whisper transcription, or rapid text thoughts.
+            </p>
+          </div>
+
+          <!-- Stage 2 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">2</div>
+              <span>STAGE TWO</span>
+            </div>
+            <h3 class="stage-title">AI Understanding</h3>
+            <p class="stage-desc">
+              Zero-hallucination Named Entity Recognition extracting People, Organizations, Things, Dates, and Amounts.
+            </p>
+          </div>
+
+          <!-- Stage 3 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">3</div>
+              <span>STAGE THREE</span>
+            </div>
+            <h3 class="stage-title">Candidate Remember</h3>
+            <p class="stage-desc">
+              Transparent candidate verification. Review, modify, or approve memory candidates before committing to storage.
+            </p>
+          </div>
+
+          <!-- Stage 4 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">4</div>
+              <span>STAGE FOUR</span>
+            </div>
+            <h3 class="stage-title">Grounded Ask</h3>
+            <p class="stage-desc">
+              Conversational Q&A backed by hybrid keyword + 1536-dim vector search with direct, verifiable evidence citations.
+            </p>
+          </div>
+
+          <!-- Stage 5 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">5</div>
+              <span>STAGE FIVE</span>
+            </div>
+            <h3 class="stage-title">Context Bridge</h3>
+            <p class="stage-desc">
+              Proactive relevance engine connecting immediate situations (<em>"AC isn't cooling"</em>) to past memories (<em>"Ravi serviced it on Aug 18"</em>).
+            </p>
+          </div>
+
+          <!-- Stage 6 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">6</div>
+              <span>STAGE SIX</span>
+            </div>
+            <h3 class="stage-title">Action Approval</h3>
+            <p class="stage-desc">
+              Strict human-in-the-loop guardrails. NYABAGAM pre-drafts WhatsApp/SMS messages but NEVER dispatches without your explicit tap.
+            </p>
+          </div>
+
+          <!-- Stage 7 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">7</div>
+              <span>STAGE SEVEN</span>
+            </div>
+            <h3 class="stage-title">Outcome Resolution</h3>
+            <p class="stage-desc">
+              Tracks state transitions (e.g. appliance status: <code>needs_service</code> → <code>active</code>) while maintaining an immutable historical audit log.
+            </p>
+          </div>
+
+          <!-- Stage 8 -->
+          <div class="glass-card stage-card">
+            <div class="stage-number">
+              <div class="stage-number-circle">8</div>
+              <span>STAGE EIGHT</span>
+            </div>
+            <h3 class="stage-title">Knowledge Graph</h3>
+            <p class="stage-desc">
+              Continual relational graph enrichment linking people, things, and life events into a coherent, permanent personal memory network.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Bento Grid Features Section -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Core Features</div>
+          <h2 class="section-title">Engineered for Your Actual Life</h2>
+          <p class="section-desc">
+            Built with uncompromising standards: liquid glass beauty, lightning performance, and absolute privacy.
+          </p>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Bento 1 (Large) -->
+          <div class="glass-card bento-card span-2">
+            <div class="bento-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+            </div>
+            <h3 class="bento-title">Floating Capture Dock</h3>
+            <p class="bento-desc">
+              Friction is the enemy of memory. The Floating Capture Dock hovers unobtrusively, letting you record a 5-second voice memo or tap a quick thought before the moment vanishes from your head.
+            </p>
+          </div>
+
+          <!-- Bento 2 -->
+          <div class="glass-card bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <h3 class="bento-title">2-Day Early Reminders</h3>
+            <p class="bento-desc">
+              Proactive scheduled alerts 48 hours before warranties expire, bills come due, or medical follow-ups arrive. Never be caught by surprise.
+            </p>
+          </div>
+
+          <!-- Bento 3 -->
+          <div class="glass-card bento-card">
+            <div class="bento-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 class="bento-title">Zero AI Training Retention</h3>
+            <p class="bento-desc">
+              Every serverless AI invocation enforces <code>store: false</code>. Your personal life, receipts, and health discussions are never retained or used to train OpenAI foundation models.
+            </p>
+          </div>
+
+          <!-- Bento 4 (Large) -->
+          <div class="glass-card bento-card span-2">
+            <div class="bento-icon-wrap">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3 class="bento-title">Offline-First SQLite Architecture</h3>
+            <p class="bento-desc">
+              Airplane mode, poor subway reception, or off-grid travels? NYABAGAM writes directly to local SQLite storage first, keeping your memory completely functional without internet, and syncing seamlessly when back online.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="comparison-section" id="comparison">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Comparison Matrix</div>
+          <h2 class="section-title">Why Traditional Notes & AI Fail</h2>
+          <p class="section-desc">
+            Notes apps are passive graveyards where information gets lost. Generic chatbots hallucinate and forget. NYABAGAM is built differently.
+          </p>
+        </div>
+
+        <div class="glass-card table-wrapper">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th style="width: 34%;">Capability / Feature</th>
+                <th style="width: 22%;">Traditional Notes<br><small style="color:var(--text-tertiary)">(Apple Notes, Keep, Notion)</small></th>
+                <th style="width: 22%;">Generic Chatbots<br><small style="color:var(--text-tertiary)">(ChatGPT, Copilot)</small></th>
+                <th style="width: 22%;" class="highlight-col"><strong style="color:var(--accent-cyan)">NYABAGAM</strong><br><small style="color:var(--accent-cyan)">Personal Memory Companion</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Automatic Entity Extraction (NER)</strong></td>
+                <td class="cross-icon">✕ Manual tagging required</td>
+                <td class="cross-icon">✕ Lost in chat stream</td>
+                <td class="highlight-col check-icon">✓ Automatic & Grounded</td>
+              </tr>
+              <tr>
+                <td><strong>Proactive Context Bridge</strong></td>
+                <td class="cross-icon">✕ Passive search only</td>
+                <td class="cross-icon">✕ No cross-chat memory</td>
+                <td class="highlight-col check-icon">✓ Connects past to present</td>
+              </tr>
+              <tr>
+                <td><strong>Human-in-the-Loop Action Dispatch</strong></td>
+                <td class="cross-icon">✕ None</td>
+                <td class="cross-icon">✕ Hallucinates actions</td>
+                <td class="highlight-col check-icon">✓ 1-Tap WhatsApp/SMS Proposals</td>
+              </tr>
+              <tr>
+                <td><strong>Grounded Evidence Citations</strong></td>
+                <td class="cross-icon">✕ None</td>
+                <td class="cross-icon">✕ Hallucinates sources</td>
+                <td class="highlight-col check-icon">✓ Exact note citation proof</td>
+              </tr>
+              <tr>
+                <td><strong>Zero Model Training Retention</strong></td>
+                <td>Depends on provider</td>
+                <td class="cross-icon">✕ Often trained on chats</td>
+                <td class="highlight-col check-icon">✓ Strict <code>store: false</code> policy</td>
+              </tr>
+              <tr>
+                <td><strong>Offline-First Operation</strong></td>
+                <td class="check-icon">✓ Local notes</td>
+                <td class="cross-icon">✕ 100% Cloud-dependent</td>
+                <td class="highlight-col check-icon">✓ Local SQLite + Cloud Sync</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Privacy & Security Manifesto -->
+    <section class="section" id="privacy">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Privacy By Design</div>
+          <h2 class="section-title">Our Sacred Privacy Commitments</h2>
+          <p class="section-desc">
+            Your memories belong to you. Not to an AI training cluster. Not to an advertising broker.
+          </p>
+        </div>
+
+        <div class="security-grid">
+          <div class="glass-card security-card">
+            <span class="security-badge">● ROW-LEVEL SECURITY</span>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">PostgreSQL User-Scoped RLS</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+              Every database table strictly enforces <code>auth.uid() = user_id</code> at the engine level. No cross-tenant data leakage is physically possible.
+            </p>
+          </div>
+
+          <div class="glass-card security-card">
+            <span class="security-badge">● ZERO CLIENT SECRETS</span>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">Secure Serverless Boundary</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+              Zero third-party API keys ever touch the mobile app client. All inference is brokered by authenticated serverless functions behind strict rate limits.
+            </p>
+          </div>
+
+          <div class="glass-card security-card">
+            <span class="security-badge">● EXPLICIT AUTHORIZATION</span>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">Human-in-the-Loop Safeguard</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+              NYABAGAM will never automatically message, call, or email anyone. Action sheets present transparent drafts that you must tap to approve.
+            </p>
+          </div>
+
+          <div class="glass-card security-card">
+            <span class="security-badge">● ZERO-TRAINING RETENTION</span>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 10px;">Zero-Retention AI</h3>
+            <p style="font-size: 14px; color: var(--text-secondary); line-height: 1.6;">
+              OpenAI API endpoints are invoked with <code>store: false</code>, preventing your thoughts, transcripts, and entities from being cached or trained on.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Download & APK Hub Section -->
+    <section class="download-section" id="download">
+      <div class="container">
+        <div class="glass-card download-hub-card">
+          <div>
+            <div class="badge-pill" style="margin-bottom: 16px;">
+              <span>🚀 Official Android Release</span>
+              <span>•</span>
+              <span style="color: var(--accent-cyan);">v1.0.0</span>
+            </div>
+
+            <h2 style="font-size: clamp(28px, 4vw, 42px); font-weight: 800; line-height: 1.2; margin-bottom: 16px;">
+              Install NYABAGAM on Your Phone
+            </h2>
+
+            <p style="font-size: 16px; color: var(--text-secondary); line-height: 1.6;">
+              Get started in seconds. Download the production-signed Android APK directly to your device and take control of your memory.
+            </p>
+
+            <div class="download-meta">
+              <div><strong>Version:</strong> 1.0.0</div>
+              <div><strong>Size:</strong> 58.5 MB</div>
+              <div><strong>Requires:</strong> Android 8.0+</div>
+              <div><strong>Status:</strong> Verified & Clean</div>
+            </div>
+
+            <div style="display: flex; gap: 14px; flex-wrap: wrap;">
+              <a href="assets/nyabagam-v1.apk" download="nyabagam-v1.apk" class="btn btn-primary btn-lg download-apk-btn">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 16l4-5h-3V4h-2v7H8l4 5zm9 4H3v-2h18v2z"/>
+                </svg>
+                Download APK Directly
+              </a>
+              <a href="#simulator" class="btn btn-secondary btn-lg">
+                Try Web Simulator
+              </a>
+            </div>
+
+            <!-- Sideloading instructions -->
+            <ul class="steps-list">
+              <li class="step-item">
+                <div class="step-num">1</div>
+                <div>Tap <strong>Download APK Directly</strong> on your phone.</div>
+              </li>
+              <li class="step-item">
+                <div class="step-num">2</div>
+                <div>Open the downloaded file and tap <em>"Allow from this source"</em> if prompted by Android.</div>
+              </li>
+              <li class="step-item">
+                <div class="step-num">3</div>
+                <div>Launch NYABAGAM and complete the 30-second onboarding.</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- QR Code Side -->
+          <div class="qr-box">
+            <div class="qr-placeholder">
+              <canvas id="qrCanvas"></canvas>
+            </div>
+            <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Scan to Download</div>
+            <div style="font-size: 12px; color: var(--text-tertiary); max-width: 200px;">
+              Point your phone camera here to download the APK directly to your device.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion -->
+    <section class="faq-section" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Frequently Asked Questions</div>
+          <h2 class="section-title">Answers to Common Questions</h2>
+        </div>
+
+        <div class="faq-list">
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>What does "NYABAGAM" mean?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              <strong>NYABAGAM (ஞாபகம்)</strong> is the classical Tamil word for "Memory" and "Remembrance". We chose this name because true memory is not just raw archival text—it is having the right context recalled at the exact right moment.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How does NYABAGAM protect my privacy?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              NYABAGAM is engineered with a Zero-Retention architecture. Every call to our serverless AI orchestrator explicitly enforces <code>store: false</code>, preventing your notes and entities from being cached or used in model training. All database tables strictly enforce PostgreSQL Row-Level Security (RLS) linked to your authenticated user account.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Does NYABAGAM send messages or call contacts automatically?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              Never. NYABAGAM operates with strict <strong>Human-in-the-Loop</strong> safeguards. When a situation arises (such as an appliance needing service under warranty), the Context Bridge drafts an action proposal for WhatsApp or phone. It will never dispatch anything until you explicitly review and tap the approval button.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Can I use NYABAGAM completely offline?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes! The application features a robust local SQLite repository. You can capture notes, review recent memories, and track reminders without an active internet connection. When you reconnect, your local changes seamlessly sync to your cloud-secured profile.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>How are 2-day early reminders handled?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              When an entity with an expiration or follow-up date is detected (e.g. warranty expiration, medical appointment, insurance renewal), NYABAGAM schedules a local high-priority notification 48 hours in advance, giving you ample time to prepare.
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-question">
+              <span>Is an iOS release planned?</span>
+              <span class="faq-icon">▼</span>
+            </button>
+            <div class="faq-answer">
+              Yes. NYABAGAM is built on Flutter 3.44+ cross-platform architecture. The iOS version is currently in internal TestFlight testing and will be released following the Android V1 rollout.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="logo-brand">
+          <div class="logo-mark">ஞா</div>
+          <div class="brand-text">
+            <span class="brand-title">NYABAGAM</span>
+            <span class="brand-sub">ஞாபகம் • Your Memory, With Context</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+          <a href="#simulator" class="nav-link">Simulator</a>
+          <a href="#stages" class="nav-link">8 Stages</a>
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#privacy" class="nav-link">Privacy</a>
+          <a href="#download" class="nav-link">Download</a>
+        </div>
+
+        <div class="status-pill">
+          <div class="status-dot"></div>
+          <span>V1.0 System Operational • Offline Ready</span>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          © 2026 NYABAGAM (ஞாபகம்). All rights reserved. Crafted with Flutter, Supabase & Liquid Glass.
+        </div>
+        <div style="display: flex; gap: 16px;">
+          <span>Zero-Retention Guarantee</span>
+          <span>•</span>
+          <span>RLS Protected</span>
+          <span>•</span>
+          <span>OpenAI store:false</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>
